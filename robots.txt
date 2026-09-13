@@ -1,0 +1,10 @@
+# 允许所有搜索引擎抓取
+User-agent: *
+Allow: /
+
+# 开发与文档目录对搜索引擎无价值，且会稀释抓取预算
+Disallow: /tools/
+Disallow: /docs/
+
+# 部署到自己的域名后，把下行地址换成真实域名
+Sitemap: https://example.com/sitemap.xml

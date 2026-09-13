@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="整机功耗计算器">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#35d0a5"/>
+      <stop offset="1" stop-color="#4c9aff"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <!-- 闪电：与页面 logo 一致 -->
+  <path d="M36.5 10 L20 35.5 h10.5 L25.5 54 L44 27.5 H33 Z"
+        fill="#04150f" stroke="#04150f" stroke-width="2" stroke-linejoin="round"/>
+</svg>
