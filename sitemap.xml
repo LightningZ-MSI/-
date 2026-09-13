@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  站点地图。部署到自己的域名后，请把所有 https://example.com/ 替换成真实地址。
-  本站是单页应用，因此只有一个 URL；若将来拆出「关于」「隐私」等独立页面，
-  在此追加 <url> 节点即可。
+  站点地图。本站是单页应用，因此只有一个 URL；
+  若将来拆出「关于」「隐私」等独立页面，在此追加 <url> 节点即可。
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://example.com/</loc>
+    <loc>https://lightningz-msi.github.io/-/</loc>
     <lastmod>2026-09-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://example.com/"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://lightningz-msi.github.io/-/"/>
   </url>
 </urlset>

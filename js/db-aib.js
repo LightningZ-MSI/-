@@ -57,12 +57,12 @@
     /* ------------------------------------------------------ NVIDIA 阵营 -- */
     /* 华硕 ASUS */
     { id: 'asus-rog-matrix', vendor: '华硕 ASUS', series: 'ROG Matrix', cn: '骇客',
-      brands: ['NVIDIA'], tier: 'halo', minTbp: 500, liquid: true, radiator: 360,
+      brands: ['NVIDIA'], tier: 'halo', minTbp: 500, since: 2025, liquid: true, radiator: 360,
       powerMult: 1.30, ocMult: 1.05, bias: 'aggressive', length: 280, slots: 2.0,
       connector: '1× 12V-2x6', recPsu: 1200,
       note: 'ROG 最高阶液冷系列，配 360mm 冷排，出厂功耗墙远高于公版，面向极限超频。' },
     { id: 'asus-rog-astral', vendor: '华硕 ASUS', series: 'ROG Astral', cn: '星曜',
-      brands: ['NVIDIA'], tier: 'flagship', minTbp: 250,
+      brands: ['NVIDIA'], tier: 'flagship', minTbp: 250, since: 2025,
       powerMult: 1.04, ocMult: 1.00, bias: 'aggressive', length: 357.6, slots: 3.8 },
     { id: 'asus-rog-strix', vendor: '华硕 ASUS', series: 'ROG Strix', cn: '猛禽',
       brands: ['NVIDIA', 'AMD'], tier: 'flagship', minTbp: 180,
@@ -84,13 +84,13 @@
       brands: ['NVIDIA'], tier: 'blower', minTbp: 0,
       powerMult: 1.00, ocMult: 1.00, bias: 'conservative' },
     { id: 'asus-noctua', vendor: '华硕 ASUS', series: 'Noctua Edition', cn: '猫头鹰联名',
-      brands: ['NVIDIA'], tier: 'flagship', minTbp: 355, maxTbp: 380,
+      brands: ['NVIDIA'], tier: 'flagship', minTbp: 355, maxTbp: 380, since: 2022,
       powerMult: 1.02, ocMult: 1.08, bias: 'moderate', length: 310, slots: 3.8,
       note: '与猫头鹰联名的静音向型号。经核实仅覆盖 RTX 5080，功耗墙偏保守但噪音表现最好。' },
 
     /* 微星 MSI */
     { id: 'msi-lightning-z', vendor: '微星 MSI', series: 'Lightning Z', cn: '闪电',
-      brands: ['NVIDIA'], tier: 'halo', minTbp: 500,
+      brands: ['NVIDIA'], tier: 'halo', minTbp: 500, since: 2026,
       powerMult: 1.39, ocMult: 1.25, bias: 'aggressive', liquid: true, radiator: 360,
       length: 300, slots: 2.5,
       connector: '2× 12V-2x6', recPsu: 1600,
@@ -103,14 +103,14 @@
       brands: ['NVIDIA'], tier: 'mainstream', minTbp: 0,
       powerMult: 1.00, ocMult: 1.05, bias: 'moderate', length: 337, slots: 3.0 },
     { id: 'msi-gaming-x', vendor: '微星 MSI', series: 'GAMING X', cn: '魔龙 X',
-      brands: ['NVIDIA'], tier: 'mainstream', minTbp: 0,
+      brands: ['NVIDIA'], tier: 'mainstream', minTbp: 0, since: 2016,
       powerMult: 1.02, ocMult: 1.08, bias: 'moderate', length: 300, slots: 2.5 },
     { id: 'msi-vanguard', vendor: '微星 MSI', series: 'VANGUARD', cn: '神龙',
-      brands: ['NVIDIA'], tier: 'flagship', minTbp: 200,
+      brands: ['NVIDIA'], tier: 'flagship', minTbp: 200, since: 2025,
       powerMult: 1.05, ocMult: 1.10, bias: 'aggressive', length: 340, slots: 3.5,
       note: '微星 RTX 50 世代新增的高端系列。' },
     { id: 'msi-shadow', vendor: '微星 MSI', series: 'SHADOW', cn: '幻影师',
-      brands: ['NVIDIA'], tier: 'mainstream', minTbp: 0,
+      brands: ['NVIDIA'], tier: 'mainstream', minTbp: 0, since: 2025,
       powerMult: 1.02, ocMult: 1.07, bias: 'moderate', length: 310, slots: 2.5 },
     { id: 'msi-ventus', vendor: '微星 MSI', series: 'VENTUS', cn: '万图师',
       brands: ['NVIDIA'], tier: 'value', minTbp: 0,
@@ -128,7 +128,7 @@
 
     /* 技嘉 GIGABYTE */
     { id: 'gigabyte-aorus-xtreme', vendor: '技嘉 GIGABYTE', series: 'AORUS XTREME', cn: '超级雕',
-      brands: ['NVIDIA'], tier: 'halo', minTbp: 400, liquid: true, radiator: 360,
+      brands: ['NVIDIA'], tier: 'halo', minTbp: 400, since: 2020, liquid: true, radiator: 360,
       powerMult: 1.13, ocMult: 1.10, bias: 'aggressive', length: 290, slots: 2.0,
       recPsu: 1000,
       note: '实际产品为 AORUS XTREME WATERFORCE（水冷形态），覆盖 RTX 5090 D 32G / 5080 16G。' },
@@ -217,7 +217,7 @@
 
     /* 映众 INNO3D */
     { id: 'inno3d-ichill-frostbite', vendor: '映众 INNO3D', series: 'iCHILL FROSTBITE', cn: '冰龙 水冷版',
-      brands: ['NVIDIA'], tier: 'halo', minTbp: 400, liquid: true, radiator: 360,
+      brands: ['NVIDIA'], tier: 'halo', minTbp: 400, since: 2020, liquid: true, radiator: 360,
       powerMult: 1.10, ocMult: 1.10, bias: 'aggressive', length: 280, slots: 2.0 },
     { id: 'inno3d-ichill-x4', vendor: '映众 INNO3D', series: 'iCHILL X4', cn: '冰龙 X4',
       brands: ['NVIDIA'], tier: 'flagship', minTbp: 200,
@@ -287,7 +287,7 @@
 
     /* --------------------------------------------------------- AMD 阵营 -- */
     { id: 'powercolor-liquid-devil', vendor: '撼讯 PowerColor', series: 'Liquid Devil', cn: '水魔',
-      brands: ['AMD'], tier: 'halo', minTbp: 280, liquid: true, radiator: 360,
+      brands: ['AMD'], tier: 'halo', minTbp: 280, since: 2019, liquid: true, radiator: 360,
       powerMult: 1.12, ocMult: 1.08, bias: 'aggressive', length: 280, slots: 2.0 },
     { id: 'powercolor-red-devil', vendor: '撼讯 PowerColor', series: 'Red Devil', cn: '红魔',
       brands: ['AMD'], tier: 'flagship', minTbp: 180,
@@ -317,7 +317,7 @@
     /* 华擎 ASRock —— 覆盖型号已按 asrock.com 官网型号表逐条核对（见
        docs/asrock-gpu-models.txt）。这是全库中覆盖范围唯一被逐条核实的厂商。 */
     { id: 'asrock-aqua', vendor: '华擎 ASRock', series: 'AQUA', cn: '水神',
-      brands: ['AMD'], tier: 'halo', liquid: true, radiator: 360,
+      brands: ['AMD'], tier: 'halo', since: 2019, liquid: true, radiator: 360,
       onlyGpus: ['rx7900xtx'],
       powerMult: 1.12, ocMult: 1.08, bias: 'aggressive', length: 280, slots: 2.0,
       note: '华擎水冷旗舰系列。官网型号表显示仅 RX 7900 XTX AQUA 24GB OC 一款。' },
@@ -343,7 +343,7 @@
       note: '官网型号表：用于 Arc A770 与 RX 7000 世代；RX 9000 世代华擎改用 Taichi / Steel Legend / Challenger。' },
 
     { id: 'xfx-mercury', vendor: '讯景 XFX', series: 'MERCURY', cn: '海外版',
-      brands: ['AMD'], tier: 'flagship', minTbp: 180,
+      brands: ['AMD'], tier: 'flagship', minTbp: 180, since: 2019,
       powerMult: 1.09, ocMult: 1.09, bias: 'aggressive', length: 340, slots: 3.0,
       connector: '3× 8pin' },
     { id: 'xfx-qick', vendor: '讯景 XFX', series: 'QICK', cn: '快速版',
@@ -553,7 +553,7 @@
       tbp: 415, ocLimit: 450, ocBias: 'aggressive', connector: '1× 12V-2x6',
       length: 348, slots: 3.6, recPsu: 1000, liquid: false,
       confidence: 'leak', source: 'ithome50super',
-      note: '⚠️ 显卡本身未发布，规格纯属前瞻推演。' },
+      note: '注意：显卡本身未发布，规格纯属前瞻推演。' },
 
     /* ------------------------------------------------------ AMD RDNA 4 -- */
     { id: 'powercolor-reddevil-9070xt', gpuId: 'rx9070xt', vendor: '撼讯 PowerColor', series: 'Red Devil',
@@ -619,6 +619,10 @@
       SERIES.forEach(function (s) {
         if (s.brands.indexOf(g.brand) === -1) return;
         if (s.onlyGpus && s.onlyGpus.indexOf(g.id) === -1) return;
+        /* 年代约束：系列不能长到它还不存在的年代。
+           没有这条，2025 年才出现的 ROG Astral / 闪电 会被生成到 GTX 970 上，
+           产出一堆现实中根本不存在的型号。 */
+        if (s.since && g.year && g.year < s.since) return;
         if (g.tbp < (s.minTbp || 0)) return;
         if (s.maxTbp != null && g.tbp > s.maxTbp) return;
 

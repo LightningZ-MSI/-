@@ -347,5 +347,71 @@
     }
   ];
 
-  root.HWDB_CPUS = INTEL.concat(AMD, FUTURE);
+  /* ================================================ 世代 / 系列分组元数据 ====
+   * 与 db.js 中 GPU 的做法一致：把 family 长名映射成稳定的世代 id、短标签、
+   * 上市年份与新旧分段，供 UI 做三级筛选（品牌 → 系列/世代 → 型号）。
+   *
+   * segment 取值：
+   *   'current' —— 当前在售、装机会优先考虑
+   *   'legacy'  —— 已停产，多见于二手/沿用旧机
+   *   'future'  —— 已公布或强传闻，尚未上市
+   * ========================================================================*/
+  var CPU_GEN_MAP = {
+    'Core Ultra 200S Plus (Arrow Lake Refresh)':
+      { id: 'cu200splus', label: 'Core Ultra 200S Plus', year: 2026, segment: 'current' },
+    'Core Ultra 200S (Arrow Lake)':
+      { id: 'cu200s', label: 'Core Ultra 200S', year: 2024, segment: 'current' },
+    'Core 14 代 (Raptor Lake Refresh)':
+      { id: 'intel14', label: 'Core 第 14 代', year: 2023, segment: 'current' },
+    'Core 13 代 (Raptor Lake)':
+      { id: 'intel13', label: 'Core 第 13 代', year: 2022, segment: 'legacy' },
+    'Core 12 代 (Alder Lake)':
+      { id: 'intel12', label: 'Core 第 12 代', year: 2021, segment: 'legacy' },
+    'Core 11 代 (Rocket Lake)':
+      { id: 'intel11', label: 'Core 第 11 代', year: 2020, segment: 'legacy' },
+    'Core 10 代 (Comet Lake)':
+      { id: 'intel10', label: 'Core 第 10 代', year: 2020, segment: 'legacy' },
+    'Ryzen 9000 (Zen 5)':
+      { id: 'ryzen9000', label: 'Ryzen 9000', year: 2024, segment: 'current' },
+    'Ryzen 7000 (Zen 4)':
+      { id: 'ryzen7000', label: 'Ryzen 7000', year: 2022, segment: 'current' },
+    'Ryzen 5000 (Zen 3)':
+      { id: 'ryzen5000', label: 'Ryzen 5000', year: 2020, segment: 'current' },
+    'Ryzen 3000 (Zen 2)':
+      { id: 'ryzen3000', label: 'Ryzen 3000', year: 2019, segment: 'legacy' },
+    'Ryzen 2000 / 1000 (Zen+ / Zen)':
+      { id: 'ryzen2000', label: 'Ryzen 2000 / 1000', year: 2018, segment: 'legacy' },
+    'Ryzen Zen 6 (Olympic Ridge) — 未发布':
+      { id: 'zen6', label: 'Ryzen Zen 6（未发布）', year: 2027, segment: 'future' },
+    'Nova Lake-S (LGA1954) — 未发布':
+      { id: 'novalake', label: 'Nova Lake-S（未发布）', year: 2027, segment: 'future' }
+  };
+
+  /* 展示顺序：当前世代在前，老平台居中，未发布殿后 */
+  var CPU_GEN_ORDER = [
+    'cu200splus', 'cu200s', 'ryzen9000',
+    'intel14', 'ryzen7000',
+    'intel13', 'intel12', 'ryzen5000',
+    'intel11', 'intel10', 'ryzen3000', 'ryzen2000',
+    'zen6', 'novalake'
+  ];
+
+  var CPUS = INTEL.concat(AMD, FUTURE);
+
+  CPUS.forEach(function (c) {
+    var g = CPU_GEN_MAP[c.family] || null;
+    if (!g) {
+      /* 兜底：将来新增 block 忘了登记时，不静默变成 undefined，
+         而是显式标记为未分组，方便 dataaudit 抓到。 */
+      g = { id: 'ungrouped', label: c.family || '未分组', year: 0, segment: 'current' };
+    }
+    c.gen = g.id;
+    c.genLabel = g.label;
+    c.year = c.year || g.year;
+    c.segment = g.segment;
+  });
+
+  root.HWDB_CPUS = CPUS;
+  root.HWDB_CPU_GEN_ORDER = CPU_GEN_ORDER;
+  root.HWDB_CPU_GEN_META = CPU_GEN_MAP;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

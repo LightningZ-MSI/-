@@ -6,5 +6,4 @@ Allow: /
 Disallow: /tools/
 Disallow: /docs/
 
-# 部署到自己的域名后，把下行地址换成真实域名
-Sitemap: https://example.com/sitemap.xml
+Sitemap: https://lightningz-msi.github.io/-/sitemap.xml

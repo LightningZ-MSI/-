@@ -5,43 +5,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>页面不存在 · 台式机功耗计算器</title>
 <meta name="robots" content="noindex, follow">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta name="theme-color" content="#121212">
+<meta name="color-scheme" content="dark light">
+<!-- 图标与标志都内联成 data URI，本页完全自包含。
+     不用相对路径也不用根绝对路径：本站在 GitHub Pages 上是项目子路径站点
+     （https://<user>.github.io/-/），而 404 是「按出错地址渲染、浏览器 URL 不变」的，
+     相对路径会随出错地址的深度乱跑，根绝对的 /favicon.svg 又会解析到域名根。
+     404 页的职责恰恰是「路径出了问题」，所以它不能依赖任何路径。
+     下面的占位符由 tools/build-logo.mjs 填充（重复运行会直接替换已内联的 data URI）。 -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSLlj7DlvI/mnLrlip/ogJforqHnrpflmagiPgogIDwhLS0gUk9HIOeOqeWutuWbveW6puS5i+ecvO+8iOWPluiHquWNjuehleWumOaWuSBsb2dvIOWbvueahOWbvuW9ouacrOS9k++8ieOAggogICAgICAg55SxIHRvb2xzL2J1aWxkLWxvZ28ubWpzIOeUn+aIkO+8jOivt+WLv+aJi+aUue+8m+aUueWbvuivt+aUuea6kOWbvuWQjumHjeaWsOi/kOihjOivpeiEmuacrOOAgiAtLT4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIGZpbGw9IiMxMjEyMTIiLz4KICA8aW1hZ2UgeD0iNCIgeT0iMTcuNjEiCiAgICAgICAgIHdpZHRoPSI1NiIgaGVpZ2h0PSIyOC43OCIKICAgICAgICAgaHJlZj0iZGF0YTppbWFnZS9wbmc7YmFzZTY0LGlWQk9SdzBLR2dvQUFBQU5TVWhFVWdBQUFFZ0FBQUFsQ0FZQUFBRGhoNi9EQUFBRm8wbEVRVlI0QWVSWlRZc2RSUlM5UFRNT0p1QUhJcWdJZm15eUVWemtKWEdicGFDNGMrUENqVUlFL1JIK0IxMkk2TUtWYXhmcVNuQW42a3dNQ0lJb0dsMW9OaElIRVJObjNxdWNVM1dyWDFWMVZYWDE1RTN5SmhucWR0KzZINmR1bmU2dXJuNnpJWGY1bjVHemo2WVNVbkxIRW1SazlnSEVqSW5JNGs4bjg3YzcrZllLNVk0a0NFUXNJRDBobU9ScmtMRjJ0WlBkenNuRk4zTEJ4L1lPTXZMeVprSklsNXRnenVZSXNjUThsUE9IdG1OSGtDZEY1SmVEY0NJTityNG5waUcyRHprMkJCazUvYWFSbWVrcmIxYTZWNVNZN2VhVUlQQllFT1NJNmQ0TjZtNVE1MDg3WW5ZK2JnZ3VocXc5UVk2Y1l2MFpoN25naUxsME9lT3NtbkI3Ym1DOE9hUmY3TmVXSUxjM21mUklMUnd4RjkrdnNoQTRqWnc3RlpJaE1wdkRIWEVTZGVCY2k0YWlVU2ozSjIzbE9HSjJOMXVpZ1gwWll1OFFrZm1QdFJ6aXJoMUJMQjVGTjlYRkNWQVFQOXFJUzBIZ2s1RFI1bkdiQ2hsRlcxR0FUcUFGN1hjL2dWb3c4UHJOWXkxdTZldDJpRXZ4dHJVaENKUEJHdW5MS3A5WlBLUjZGd0RMRWdPVXBzMGo4SFEzdlhNV09WRmJDNEl3b1FaeUZvOXpJbEgxU1FjNEJ4Qml0UkJqaUVkSllLTHVkSUtpOUp2djZJU3FRSnhFSjkvOVVRb3lNcnNLSVRFdEMvV25EbTkzTUhjanA5OHp5V1owRUZRcTRpanNhVEdaTVo3bFpESjJhMEwrU1FpSmVkQWFLZ2ZpcUx5WWhoR0RJdEpka09UdnRoQ0VZaDZBY0dKSk9jdHU1NzZ5djE5YVlrM3ovNDJ0dzU3aURCNDVETTVOb2I3dWwzbU1YL1pFYmpsQlJzNjhoUUwraHBUYTliVElNSkRFVUVKYlRpY0dKZlVoMSs2VWRWT1l1Z2Q5U3hDU1FPakF0M0lEeHJraVl0NHBBWE5Da0h0emZ1VDZOMVBPN1czRmhSZjUvbTZ4Yy9ZSjRSbGpkMkdmdWcvZUl3QU5SeVhBdnc3c1J5RFpsaXZPQnlLWEYzQlF2UGZqN0lueDg0SEpOZVpTWEcvNjBRS2lPTHZJalFIUkQ5bWZPZ3h5K050TjRlZUc3Wk1ZUHp0NTVQbXJYaHBTdjcvaU54SWU0ODhiY2lQTVVnMldJSTNrVlJJSGZPWWx0VVVuQmRseU1iTkY1Q3gwRUl2dktzbStmb25YeVZmL3BhbkkrUlZpNjBsOTJwKzczUGo3Q3ptNnZwam5OVTVQOTUxZ3ZIWW1uWHFDQU5EcldDYys0V0FGSkh1M3dkY2hwbnFGNFNlSkFTNnlYTE9QaEZQakkzSkl6Rk94dGUvWlBOUzYxVnVnTUljQzFZL2w0M1NIL09VMTlTTmsySUNYdllNWjZRR3BVNjd4b0dKZmc2cjNKNER0OVIxVk9MaksxMnF5ZHlMMHdjRElaOUhwdUl5dkxzSzVQQjJUaEdJbzZYOVNSZXdBbndHSGtRZ0l3Q2RTRUJhUjJoQTNtTGpHbkdNOFJmdlJxWlNuOFZsTTVsQkNJTVpUYUEra3NNYmhlVWgyeHlFVzg4Titxa2NFMFpsTFlESDB4YktYZlIzSE1jdGVDVGVQTGNKNGlnUi9pT1VqbS9VRllaRnE1SHowT0VaT2tSK1MvcUM3TWJEQWtCWUdFeDhCZnl1eml5Si81bXZiNmlNSC9ETnVON283TU5GN0lCRmVnUEZaYm56NlljL1dTMTlaL2ltK2RZSDNURG5QZVlvRElwbHJSVHF4YUZLTWNUQ2w0K2JEaUhrczlDb3gvNGMycnlPV1k3N2cremQ3MXJHeU1Cd3I2MGlNUllKOEhJRW82UE4xYmU4azdEUE9vMitiK3F5ZUhEN3M1SnUvUk1TYWpUeDNmNmxnWWxCczRJb09HT3UzQ2xSMG9TdHg3ZDlpbU1BV2hGY1lkNVg1QWdWWXdrcmdpSDNkK3hDTGdnNEdiei80N1VZUDU2Tm9UNVJBVWR2b2plRnptd045QXM4WVlKTkNuUUlkcEZHYkxOeEtWSW1laklnRWQwR2daTnJVV2c5RlVHWmNMTnJ4UWh6R3NDaEthQXQwa21RM25MV0pCZkZGRlkvK3F6V01TZzFGekpVUnhCSENBbktGMGs5QkxCNDVIRE9OZVlIZzB3SGNaK0pTRTNPdzQva290UWQ5dTBVSStrM3FTZ25paUVvQVZTN28vRWkxZW5oQXpBWUVqMlg4a1JuR3FJNzZabmFIVFFKcW92R2xFejg5c3QrRHBRUnZSd0ZlWGQzWlRkN2lWWXNDUXl4Y0YvNzVLWnV4K2dOZkJJZWU1NkVUeCthaEpPM3pxby9GMHQvSnBaK1k0d1cyNG1NSVgxTlRyT3BGR2dNNk1vSTRNQXJjaHRpdmZ2YW5DUExzWTRpejNtRXlhUTFoM3BUeFNyRTNBQUFBLy8vRXpoTEhBQUFBQmtsRVFWUURBUElOUWVUYzBINDBBQUFBQUVsRlRrU3VRbUNDDSIvPgo8L3N2Zz4K">
 <style>
+  /* 与首页同一套 ROG 奥创令牌：近黑底、ROG 红单一强调色、2px 圆角。
+     这里不引外部样式表 —— 404 很可能就是路径问题引起的。 */
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     min-height: 100vh; display: grid; place-items: center; padding: 24px;
-    background: #0a0e13; color: #e6edf3;
-    font: 15px/1.75 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei",
-          "PingFang SC", sans-serif;
+    background: #121212; color: #ffffff;
+    font: 15px/1.75 "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
   }
   .box { max-width: 520px; text-align: center; }
-  .bolt {
-    width: 62px; height: 62px; margin: 0 auto 22px; border-radius: 15px;
-    background: linear-gradient(135deg, #35d0a5, #4c9aff);
-    display: grid; place-items: center; font-size: 32px;
-  }
-  h1 { font-size: 22px; margin-bottom: 10px; }
+
+  /* ROG 官方纵向锁定版：图形在上、REPUBLIC OF GAMERS 字标在下。
+     两张图都是从官方 logo 图里切出来的（见 tools/build-logo.mjs），
+     字标是定制字形，网页字体里没有，只能用图。
+     这里用 <img> 而不是 CSS mask：本页刻意只用最保守的 CSS，
+     少一层「mask 能不能解析 / 能不能加载」的不确定性。alt 充当无障碍名称。 */
+  .lockup { margin: 0 auto 22px; }
+  .lockup .eye { display: block; width: 84px; height: 43px; margin: 0 auto; }
+  .lockup .wordmark { display: block; width: 150px; height: 31px; margin: 11px auto 0; }
+
+  h1 { font-size: 22px; margin-bottom: 10px; font-weight: 700; }
   .code {
     font-family: ui-monospace, Consolas, monospace; font-size: 13px;
-    color: #f0a92b; margin-bottom: 18px;
+    color: #8a8a8a; margin-bottom: 18px; letter-spacing: .06em;
   }
-  p { color: #9fb0c3; font-size: 14px; margin-bottom: 26px; }
+  /* 斜切红条：与首页关键数值下方的斜切下划条同一种形态 */
+  .bar {
+    width: 48px; height: 4px; margin: 0 auto 18px; background: #ff0033;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
+  }
+  p { color: #8a8a8a; font-size: 14px; margin-bottom: 26px; }
+  /* 按钮保持干净矩形。不给可聚焦元素用 clip-path ——
+     那会连 :focus-visible 的焦点环一起裁掉，键盘用户就看不到焦点了。 */
   a.home {
-    display: inline-block; padding: 11px 26px; border-radius: 8px;
-    background: #35d0a5; color: #04150f; font-weight: 700;
-    text-decoration: none; font-size: 14px;
+    display: inline-block; padding: 12px 28px;
+    background: #ff0033; color: #fff; font-weight: 700;
+    text-decoration: none; font-size: 14px; border-radius: 2px;
   }
-  a.home:hover { background: #1d8f70; color: #fff; }
-  .hint { margin-top: 26px; font-size: 12.5px; color: #6b7d92; }
+  a.home:hover { background: #c40028; }
+  .hint { margin-top: 26px; font-size: 12.5px; color: #5a5a5a; }
 </style>
 </head>
 <body>
   <div class="box">
-    <div class="bolt">⚡</div>
+    <div class="lockup">
+      <img class="eye" src="data:image/png;base64,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" alt="ROG 玩家国度之眼" width="84" height="43">
+      <img class="wordmark" src="data:image/png;base64,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" alt="REPUBLIC OF GAMERS" width="150" height="31">
+    </div>
     <h1>这个页面不存在</h1>
-    <div class="code">404 Not Found</div>
+    <div class="code">404 NOT FOUND</div>
+    <div class="bar" aria-hidden="true"></div>
     <p>地址可能输错了，或者页面已经搬家。<br>本工具是单页应用，所有功能都在首页。</p>
-    <a class="home" href="/">回到功耗计算器</a>
+    <!-- 必须用带项目名的绝对路径 /-/：
+         404 是「按出错地址渲染、浏览器 URL 不变」的页面，相对路径会随出错地址深度乱跑；
+         而根绝对的 "/" 在本站（GitHub Pages 项目子路径站点）会跳到
+         https://lightningz-msi.github.io/ —— 那是账号根，不是这个工具。 -->
+    <a class="home" href="/-/">回到功耗计算器</a>
     <div class="hint">想算电源瓦数？首页选好 CPU 和显卡就能看到结果。</div>
   </div>
 </body>

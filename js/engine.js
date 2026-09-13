@@ -293,6 +293,18 @@
     var subtotal = items.reduce(function (a, b) { return a + b.watts; }, 0);
     subtotal = round1(subtotal);
 
+    /* 是否真正选了硬件。
+       判据是「有没有产生功耗」而不是「有没有条目」：
+       默认状态里 gpuId='__igpu__' 会压入一个 0W 的「集成显卡」条目，
+       若按条目数判定，空配置依然会被当成"已选择"，
+       于是又走回推荐电源 + 绿勾的老路。
+
+       这条判据是三个可信度缺陷的总开关：
+       没有它，空配置会算出 subtotal=0 → roundUpStandard(0) 取到最小标准瓦数 450W
+       → 推荐 3 款电源（负载率 0%）、给出升级建议，
+       同时兼容性检查因 issues 为空而输出绿色「未检测到兼容性问题 · 均匹配」。 */
+    var hasSelection = subtotal > 0;
+
     var scenarioKey = SCENARIOS[cfg.scenario] ? cfg.scenario : 'gaming';
     var sc = SCENARIOS[scenarioKey];
     var expected = round1(subtotal * sc.factor);
@@ -314,8 +326,8 @@
     if (oc) redundancy = Math.max(redundancy, 1.50);
     if (hddCount > 0) redundancy = Math.max(redundancy, 1.40);
 
-    var recFloor = roundUpStandard(subtotal * FLOOR_FACTOR);          // 硬性底线，不容差
-    var recIdeal = roundUpStandard(subtotal * redundancy, 0.01);      // 推荐目标，允许 1% 欠量
+    var recFloor = hasSelection ? roundUpStandard(subtotal * FLOOR_FACTOR) : 0;   // 硬性底线，不容差
+    var recIdeal = hasSelection ? roundUpStandard(subtotal * redundancy, 0.01) : 0;
 
     // 厂商建议整机电源（如 ASUS 对 5090 全超频平台建议 1000W、
     // 微星对 5090 闪电建议 1600W）作为地板
@@ -327,7 +339,7 @@
     // 超出消费级电源常规范围时如实告知，而不是给出一个买不到的非标准瓦数
     var MAX_CONSUMER = STANDARD_WATTS[STANDARD_WATTS.length - 1];
     var idealTarget = round1(subtotal * redundancy);   // 未取整的理想目标，用于说明缺口
-    var beyond = recIdeal > MAX_CONSUMER;
+    var beyond = hasSelection && recIdeal > MAX_CONSUMER;
     if (beyond) {
       issues.push({
         level: 'warn', code: 'BEYOND_CONSUMER_PSU',
@@ -361,28 +373,53 @@
     }
 
     /* ------------------------------------------------ 11. 电源候选推荐 -- */
-    var psuPicks = pickPsus(recFloor, recIdeal, mobo, aib, gpu, pcCase);
+    /* 没选硬件时不推荐任何电源 —— 空配置下 compatible() 全部返回 true，
+       会把 ≥450W 的型号全塞进候选池，渲染出 3 张「负载率 0%」的电源卡。 */
+    var psuPicks = hasSelection
+      ? pickPsus(recFloor, recIdeal, mobo, aib, gpu, pcCase)
+      : { value: null, balanced: null, flagship: null, min: null, list: [],
+          distinctCount: 0, belowFloor: [], need12v2x6: false, need8pin: 0, filteredByCase: false };
 
     /* ------------------------------------------------- 12. 升级余量推演 -- */
     var otherWatts = subtotal - gpuWatts;
     var upgrade = null;
-    if (recIdeal > 0) {
+    if (hasSelection && recIdeal > 0) {
       var gpuBudget = round1(recIdeal / redundancy - otherWatts);
-      var best = null;
+      /* 升级建议只在「当前在售」的卡里挑。
+         数据库补了 GTX 900 ~ RTX 30 系老卡之后，这里原来「TBP 最大者胜」的
+         比较会把 2019 年的 RTX 2070 SUPER（215W）顶掉 Arc B580（190W）——
+         对一个 2026 年准备升级显卡的人来说这是坏建议：TBP 高不等于性能好，
+         更不等于买得到。
+         规则：先在当前世代里找 TBP 最高的；只有预算内一块在售卡都放不下，
+         才退回老卡，并在文案里点明「只能选到已停产的型号」。 */
+      var best = null, bestLegacy = null;
       for (var i = 0; i < HWDB.gpus.length; i++) {
         var g = HWDB.gpus[i];
         if (g.confidence === 'leak') continue;
-        if (g.tbp <= gpuBudget && (!best || g.tbp > best.tbp)) best = g;
+        if (g.tbp > gpuBudget) continue;
+        if (g.segment === 'legacy') {
+          if (!bestLegacy || g.tbp > bestLegacy.tbp) bestLegacy = g;
+        } else if (!best || g.tbp > best.tbp) {
+          best = g;
+        }
       }
+      var legacyOnly = false;
+      if (!best && bestLegacy) { best = bestLegacy; legacyOnly = true; }
+
       var nonGpuPct = subtotal > 0 ? (otherWatts / subtotal * 100) : 100;
       upgrade = {
         headroomWatts: round1(recIdeal - subtotal),
         headroomPct: recIdeal > 0 ? Math.round((recIdeal - subtotal) / recIdeal * 100) : 0,
         gpuBudget: Math.max(0, gpuBudget),
         maxGpu: best ? best.name + '（' + best.tbp + 'W）' : null,
+        legacyOnly: legacyOnly,
         note: best
           ? '按 ' + recIdeal + 'W 电源与 ' + redundancy.toFixed(2) + ' 倍冗余计算，可支持最高 ' +
-            best.name + '（TBP ' + best.tbp + 'W）；非显卡部分占整机 ' + Math.round(nonGpuPct) + '%'
+            best.name + '（TBP ' + best.tbp + 'W）；非显卡部分占整机 ' + Math.round(nonGpuPct) + '%' +
+            (legacyOnly
+              ? '。注意：这个余量只够上已停产的老卡（' + best.name +
+                '），在当前在售的型号里挑不到合适的——如果打算买新卡，建议直接换更大瓦数的电源'
+              : '')
           : '当前电源余量不足以升级到数据库内任何更强的显卡，若计划大幅升级建议直接上更大瓦数'
       };
     }
@@ -463,6 +500,7 @@
     totalPrice = sumPrice(cfg);
 
     return {
+      hasSelection: hasSelection,
       scenario: scenarioKey,
       scenarioInfo: sc,
       items: items,
@@ -926,10 +964,14 @@
 
     if (r.upgrade && r.upgrade.maxGpu) {
       tips.push({
-        level: 'info', title: '升级路径：可支持 ' + r.upgrade.maxGpu,
+        level: r.upgrade.legacyOnly ? 'warn' : 'info',
+        title: '升级路径：可支持 ' + r.upgrade.maxGpu,
         detail: '当前电源预留 ' + r.upgrade.headroomPct + '% 余量（' + r.upgrade.headroomWatts + 'W），' +
                 '非显卡部分占 ' + Math.round((r.subtotal - r.gpuWatts) / r.subtotal * 100) + '%。',
-        note: '若计划 2 年内升级到更高阶显卡，建议现在就上更大瓦数，电源的折旧速度远低于显卡。'
+        note: r.upgrade.legacyOnly
+          ? '这个余量只够上已停产的老卡，在当前在售型号里挑不到合适的。' +
+            '老卡只能买二手，且使用多年后实际功耗抖动更大，建议直接换更大瓦数的电源。'
+          : '若计划 2 年内升级到更高阶显卡，建议现在就上更大瓦数，电源的折旧速度远低于显卡。'
       });
     }
 

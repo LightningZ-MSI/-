@@ -15,11 +15,28 @@
     });
   };
 
+  /* 内联 SVG 图标（单色描边，currentColor）。
+     设计系统要求全站不出现 emoji —— emoji 在 Windows / Apple / Android 上渲染
+     差异很大，且与描边图标混排时光学大小与基线都不齐。 */
+  var SVG = {
+    ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+        'stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 L9.5 18 L20 6.5"/></svg>',
+    error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+           'stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg>',
+    warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+          'stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L2 20 h20 Z"/>' +
+          '<path d="M12 10v4M12 17.5v.01"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+          'stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>',
+    close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+           'stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg>'
+  };
+
   /* ----------------------------------------------------------- 状态 ---- */
   var S = {
     scenario: 'gaming',
-    cpuId: '', cpuOc: false, cpuCustomW: '',
-    gpuBrand: 'NVIDIA', gpuId: '__igpu__', gpuAibId: '', gpuOc: false,
+    cpuBrand: 'Intel', cpuGen: '', cpuId: '', cpuOc: false, cpuCustomW: '',
+    gpuBrand: 'NVIDIA', gpuGen: '', gpuId: '', gpuAibId: '', gpuOc: false,
     gpuCustomName: '', gpuCustomW: '',
     moboId: '', ramId: '', ramKits: 1,
     storage: [], coolerId: '', fanId: '', fanQty: 3,
@@ -76,7 +93,8 @@
 
   function initMeta() {
     $('dbVersion').textContent = DB.meta.version;
-    $('dbDate').textContent = DB.meta.updated;
+    var d = $('dbDate');
+    if (d) d.textContent = DB.meta.updated;
     var c = DB.meta.counts;
     $('dbCounts').textContent =
       'CPU ' + c.cpu + ' · GPU ' + c.gpu + ' · AIC ' + c.aib +
@@ -87,7 +105,7 @@
     var cm = DB.aibCatalogMeta;
     if (cm && $('aibCatalogNote')) {
       $('aibCatalogNote').innerHTML =
-        '<b>⚠️ 关于 AIC 板型数据的可靠性（请务必阅读）</b>' +
+        '<b>关于 AIC 板型数据的可靠性</b>' +
         '<div style="margin-top:6px">本目录共 <b>' + cm.seriesCount + '</b> 个厂商系列、' +
         '<b>' + DB.meta.counts.aib + '</b> 个板型组合。其中只有 <b>' + cm.explicitCount +
         '</b> 个型号有官方规格或权威评测来源（标' +
@@ -112,11 +130,22 @@
   }
 
   function initScenarios() {
+    // 模式选择器形态：图标 + 文字 + 选中项底部红色短条（奥创的标志性组件）
+    var SC_ICON = {
+      office:  '<path d="M3 5h18v11H3z"/><path d="M8 20h8"/>',
+      gaming:  '<path d="M7 12h4M9 10v4M15.5 11.5v.01M17.5 13.5v.01"/>' +
+               '<rect x="2" y="6" width="20" height="12" rx="4"/>',
+      creator: '<path d="M12 3v10M8 7l4-4 4 4"/><path d="M4 15v4h16v-4"/>',
+      extreme: '<path d="M13 2 L4.5 13.5 H11 L10 22 L19.5 10 H13 Z"/>'
+    };
     $('scenarios').innerHTML = Object.keys(EN.SCENARIOS).map(function (k) {
       var s = EN.SCENARIOS[k];
-      return '<button class="scenario" data-sc="' + k + '">' +
-             '<b>' + esc(s.label) + '</b>' +
-             '<span>负载 ×' + s.factor.toFixed(2) + ' · 冗余 ×' + s.redundancy.toFixed(2) + '</span></button>';
+      return '<button class="scenario" data-sc="' + k + '" title="' + esc(s.desc) + '">' +
+             '<span class="si" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" ' +
+             'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+             (SC_ICON[k] || SC_ICON.gaming) + '</svg></span>' +
+             '<b>' + esc(s.label.split(' ')[0]) + '</b>' +
+             '<span>负载 ×' + s.factor.toFixed(2) + '</span></button>';
     }).join('');
     $('scenarios').addEventListener('click', function (e) {
       var b = e.target.closest('.scenario');
@@ -126,20 +155,139 @@
     });
   }
 
+  /* CPU 三级筛选：① 品牌按钮 ② 系列 / 世代 ③ 型号
+     与显卡卡同构 —— 显卡是「品牌 → 型号 → AIC 板型」，
+     CPU 是「品牌 → 系列 / 世代 → 型号」。
+     164 颗 CPU 塞进一个下拉根本没法翻，按世代切开后每段只剩 10~30 条；
+     同时保留「全部世代」这一档，让不记得自己是第几代的用户也能直接找型号。 */
   function initCpu() {
-    // 默认选 Core Ultra 7 270K Plus（2026 年主力新品）
-    S.cpuId = 'cu7-270kp';
-    var sel = $('cpuSelect');
-    sel.innerHTML = '<option value="">— 请选择 CPU（可选"未收录"手动输入）—</option>' +
-      optionsHtml(DB.cpus, S.cpuId, function (c) {
+    /* 不预选任何 CPU。
+       这里曾硬编码 S.cpuId = 'cu7-270kp'，会让「空态」永远不空 ——
+       用户什么都没选，页面却已经有了一颗 CPU 的功耗，
+       与首访应当渲染空配置的约定相矛盾。
+       品牌默认停在 Intel 只是「筛选器」的初值，不代表已选中任何硬件。 */
+
+    var brands = [];
+    DB.cpus.forEach(function (c) { if (brands.indexOf(c.brand) === -1) brands.push(c.brand); });
+
+    $('cpuBrand').innerHTML = brands.map(function (b) {
+      return '<button type="button" data-b="' + esc(b) + '">' + esc(b) + '</button>';
+    }).join('');
+
+    $('cpuBrand').addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b || b.dataset.b === S.cpuBrand) return;
+      S.cpuBrand = b.dataset.b;
+      S.cpuGen = '';       // 换品牌后原来的世代筛选必然失效，清掉
+      S.cpuId = '';        // 已选型号也不属于新品牌了，必须一起清
+      render();
+    });
+
+    $('cpuGen').addEventListener('change', function () {
+      S.cpuGen = this.value;
+      /* 只有「已选型号掉到新筛选范围之外」时才清空。
+         以前这里无条件清空，用户切一下世代看看有什么，型号就没了。 */
+      if (S.cpuId && !cpuMatchesFilter(S.cpuId)) S.cpuId = '';
+      render();
+    });
+
+    $('cpuSelect').addEventListener('change', function () { S.cpuId = this.value; render(); });
+    $('cpuOc').addEventListener('change', function () { S.cpuOc = this.checked; render(); });
+    $('cpuCustomW').addEventListener('input', function () { S.cpuCustomW = this.value; render(); });
+  }
+
+  /* 型号是否落在当前的「品牌 + 世代」筛选范围内 */
+  function cpuMatchesFilter(id) {
+    var c = DB.cpus.filter(function (x) { return x.id === id; })[0];
+    if (!c) return false;
+    if (S.cpuBrand && c.brand !== S.cpuBrand) return false;
+    if (S.cpuGen && c.gen !== S.cpuGen) return false;
+    return true;
+  }
+
+  /* 启动时修正一次筛选器与已选型号的不一致。
+     注意：这个修正**只能在启动时做一次**，绝不能放进 refreshCpuCascade()：
+     放进去的话，用户已经把 12 代 i5 选好、再去点「Core Ultra 200S」世代时，
+     刷新函数会立刻把 S.cpuGen 改回 intel12 —— 筛选器变成按不动。
+     状态修正属于「载入时的一次性修复」，交互期的一致性由事件处理器保证。
+     （注：本文件不允许出现 emoji 与变体选择符，designcheck 会查，所以这里不使用警示符号。） */
+  function normalizeCpuFilter() {
+    if (!S.cpuId) return;
+    var cur = DB.cpus.filter(function (c) { return c.id === S.cpuId; })[0];
+    if (!cur) { S.cpuId = ''; return; }
+    S.cpuBrand = cur.brand;
+    if (S.cpuGen && S.cpuGen !== cur.gen) S.cpuGen = '';
+  }
+
+  /* ② ③ 两级下拉的联动刷新。纯只读：不修改 S。 */
+  function refreshCpuCascade() {
+    if (!$('cpuBrand') || !$('cpuGen') || !$('cpuSelect')) return;
+
+    Array.prototype.forEach.call($('cpuBrand').querySelectorAll('button'), function (b) {
+      b.className = (b.dataset.b === S.cpuBrand) ? 'on' : '';
+    });
+
+    if (!S.cpuBrand) S.cpuBrand = 'Intel';
+
+    var order = DB.cpuGenOrder || [];
+    var ofBrand = DB.cpus.filter(function (c) { return c.brand === S.cpuBrand; });
+
+    // 世代按 CPU_GEN_ORDER 排（当前在售 → 已停产 → 未发布），
+    // 不在顺序表里的世代兜底附在最后，绝不静默丢掉。
+    var genIds = [], seen = {};
+    order.forEach(function (id) {
+      if (ofBrand.some(function (c) { return c.gen === id; })) { seen[id] = 1; genIds.push(id); }
+    });
+    ofBrand.forEach(function (c) {
+      if (c.gen && !seen[c.gen]) { seen[c.gen] = 1; genIds.push(c.gen); }
+    });
+
+    var SEG_CN = { current: '当前在售', legacy: '已停产 · 二手常见', future: '未发布 / 前瞻' };
+    var genItems = genIds.map(function (id) {
+      var list = ofBrand.filter(function (c) { return c.gen === id; });
+      var g = list[0];
+      return {
+        id: id,
+        text: (g.genLabel || id) + (g.year ? '（' + g.year + ' 年）' : '') + ' · ' + list.length + ' 款',
+        seg: g.segment
+      };
+    });
+
+    $('cpuGen').innerHTML =
+      '<option value="">全部世代（' + ofBrand.length + ' 款）</option>' +
+      optionsHtml(genItems, S.cpuGen,
+        function (it) { return it.text; },
+        function (it) { return SEG_CN[it.seg] || '其他'; });
+
+    var rank = {};
+    order.forEach(function (id, i) { rank[id] = i; });
+    var list = ofBrand.filter(function (c) { return !S.cpuGen || c.gen === S.cpuGen; })
+      .slice()
+      .sort(function (a, b) {
+        var ra = rank[a.gen] === undefined ? 999 : rank[a.gen];
+        var rb = rank[b.gen] === undefined ? 999 : rank[b.gen];
+        return (ra - rb) || (b.tdp - a.tdp);   // 同世代内按 TDP 从高到低
+      });
+
+    /* 兜底：万一筛选条件把已选型号挡在外面（例如用户手工改过 localStorage），
+       也要把它补回列表。否则下拉显示「请选择 CPU 型号」，
+       而引擎已经把这颗 CPU 的功耗算进去了 —— 界面和结果自相矛盾。 */
+    if (S.cpuId && !list.some(function (c) { return c.id === S.cpuId; })) {
+      var extra = DB.cpus.filter(function (c) { return c.id === S.cpuId; })[0];
+      if (extra) list = [extra].concat(list);
+    }
+
+    $('cpuSelect').innerHTML =
+      (S.cpuId ? '' : '<option value="">— 请选择 CPU 型号 —</option>') +
+      optionsHtml(list, S.cpuId, function (c) {
         return c.name + '  ·  ' + c.socket + '  ·  ' + c.tdp + 'W' +
                (c.unlocked === false ? '  ·  锁频' : '') +
                (c.released === '待发布' ? '  ·  未发布' : '');
-      }, function (c) { return c.brand + ' — ' + c.family; });
+      }, function (c) {
+        return (c.genLabel || c.family) + (c.year ? '（' + c.year + ' 年）' : '');
+      });
 
-    sel.addEventListener('change', function () { S.cpuId = sel.value; render(); });
-    $('cpuOc').addEventListener('change', function () { S.cpuOc = this.checked; render(); });
-    $('cpuCustomW').addEventListener('input', function () { S.cpuCustomW = this.value; render(); });
+    $('cpuSelect').disabled = !list.length;
   }
 
   function initGpu() {
@@ -157,12 +305,21 @@
       if (v === '__igpu__') {
         S.gpuId = '__igpu__'; S.gpuAibId = '';
       } else {
+        /* 点品牌 / 世代只改「筛选条件」，不顺手替你选中一块显卡。
+           这里原来会自动挑该品牌的第一款（最新旗舰）并立刻计入功耗，
+           用户只是想看看有哪些型号，整机功耗却已经变成 5090 的值了。 */
         S.gpuBrand = v;
-        var first = DB.gpus.filter(function (g) { return g.brand === v && g.confidence !== 'leak'; })[0]
-                 || DB.gpus.filter(function (g) { return g.brand === v; })[0];
-        S.gpuId = first ? first.id : '';
-        var a = DB.aibs.filter(function (x) { return x.gpuId === S.gpuId; });
-        S.gpuAibId = a.length ? a[0].id : '';
+        S.gpuGen = '';
+        S.gpuId = ''; S.gpuAibId = '';
+      }
+      render();
+    });
+
+    $('gpuGen').addEventListener('change', function () {
+      S.gpuGen = this.value;
+      /* 只有「已选型号掉到新筛选范围之外」时才清空 */
+      if (S.gpuId && S.gpuId !== '__igpu__' && !gpuMatchesFilter(S.gpuId)) {
+        S.gpuId = ''; S.gpuAibId = '';
       }
       render();
     });
@@ -180,7 +337,25 @@
     $('gpuCustomW').addEventListener('input', function () { S.gpuCustomW = this.value; render(); });
   }
 
-  /* ② 型号 + ③ AIC 联动刷新 */
+  /* 型号是否落在当前的「品牌 + 世代」筛选范围内 */
+  function gpuMatchesFilter(id) {
+    var g = DB.gpus.filter(function (x) { return x.id === id; })[0];
+    if (!g) return false;
+    if (S.gpuBrand && g.brand !== S.gpuBrand) return false;
+    if (S.gpuGen && g.gen !== S.gpuGen) return false;
+    return true;
+  }
+
+  /* 启动时修正一次筛选器与已选型号的不一致（理由同 normalizeCpuFilter） */
+  function normalizeGpuFilter() {
+    if (!S.gpuId || S.gpuId === '__igpu__') return;
+    var cur = DB.gpus.filter(function (x) { return x.id === S.gpuId; })[0];
+    if (!cur) { S.gpuId = ''; S.gpuAibId = ''; return; }
+    S.gpuBrand = cur.brand;
+    if (S.gpuGen && S.gpuGen !== cur.gen) S.gpuGen = '';
+  }
+
+  /* 世代下拉 + ② ③ AIC 联动刷新。纯只读：不修改 S。 */
   function refreshGpuCascade() {
     var brandBtns = $('gpuBrand').querySelectorAll('button');
     for (var i = 0; i < brandBtns.length; i++) {
@@ -189,21 +364,82 @@
       brandBtns[i].className = on ? 'on' : '';
     }
 
-    var mSel = $('gpuModel'), aSel = $('gpuAib');
+    var gSel = $('gpuGen'), mSel = $('gpuModel'), aSel = $('gpuAib');
+
     if (S.gpuId === '__igpu__') {
+      gSel.innerHTML = '<option value="">—</option>';
+      gSel.disabled = true;
       mSel.innerHTML = '<option value="__igpu__">使用 CPU 集成显卡（无独立显卡）</option>';
       mSel.disabled = true;
       aSel.innerHTML = '<option value="">—</option>';
       aSel.disabled = true;
       return;
     }
-    mSel.disabled = false; aSel.disabled = false;
+    gSel.disabled = false; mSel.disabled = false; aSel.disabled = false;
 
-    var list = DB.gpus.filter(function (g) { return g.brand === S.gpuBrand; });
-    mSel.innerHTML = optionsHtml(list, S.gpuId, function (g) {
-      return g.name + '  ·  TBP ' + g.tbp + 'W  ·  ' + g.memory +
-             (g.confidence === 'leak' ? '  [未发布]' : '');
-    }, function (g) { return g.family; });
+    var order = DB.gpuGenOrder || [];
+    var meta = DB.gpuGenMeta || {};
+    var ofBrand = DB.gpus.filter(function (g) { return g.brand === S.gpuBrand; });
+
+    var genIds = [], seen = {};
+    order.forEach(function (id) {
+      if (ofBrand.some(function (g) { return g.gen === id; })) { seen[id] = 1; genIds.push(id); }
+    });
+    ofBrand.forEach(function (g) {
+      if (g.gen && !seen[g.gen]) { seen[g.gen] = 1; genIds.push(g.gen); }
+    });
+
+    /* 世代分组名里直接写明「已停产」，让用户一眼看到老卡也在库里，
+       不用点进去猜。这是「关切久远硬件」最直接的界面表达。 */
+    var SEG_CN = {
+      current: '当前在售',
+      legacy: '已停产 · 二手常见',
+      unreleased: '未发布 / 前瞻',
+      future: '未发布 / 前瞻'
+    };
+    var genItems = genIds.map(function (id) {
+      var list = ofBrand.filter(function (g) { return g.gen === id; });
+      var m = meta[id] || {};
+      return {
+        id: id,
+        text: (m.label || id) + (m.year ? '（' + m.year + ' 年）' : '') + ' · ' + list.length + ' 款',
+        seg: m.segment || list[0].segment
+      };
+    });
+
+    gSel.innerHTML = '<option value="">全部世代（' + ofBrand.length + ' 款）</option>' +
+      optionsHtml(genItems, S.gpuGen,
+        function (it) { return it.text; },
+        function (it) { return SEG_CN[it.seg] || '其他'; });
+
+    var rank = {};
+    order.forEach(function (id, i) { rank[id] = i; });
+    var list = ofBrand.filter(function (g) { return !S.gpuGen || g.gen === S.gpuGen; })
+      .slice()
+      .sort(function (a, b) {
+        var ra = rank[a.gen] === undefined ? 999 : rank[a.gen];
+        var rb = rank[b.gen] === undefined ? 999 : rank[b.gen];
+        return (ra - rb) || (b.tbp - a.tbp);
+      });
+
+    /* 兜底：已选型号必须始终出现在列表里（理由同 refreshCpuCascade） */
+    if (S.gpuId && !list.some(function (g) { return g.id === S.gpuId; })) {
+      var extraG = DB.gpus.filter(function (g) { return g.id === S.gpuId; })[0];
+      if (extraG) list = [extraG].concat(list);
+    }
+
+    // 未选型号时给一个显式占位项，避免浏览器默认选中第一个型号
+    // （那样界面上像是已经选好了，而 S.gpuId 其实是空的）
+    mSel.innerHTML = (S.gpuId ? '' : '<option value="">— 请选择显卡型号 —</option>') +
+      optionsHtml(list, S.gpuId, function (g) {
+        return g.name + '  ·  TBP ' + g.tbp + 'W  ·  ' + g.memory +
+               (g.confidence === 'leak' ? '  [未发布]' : '') +
+               (g.segment === 'legacy' ? '  [已停产]' : '');
+      }, function (g) {
+        var m = meta[g.gen] || {};
+        return (m.label || g.family) + (m.year ? '（' + m.year + ' 年）' : '') +
+               (g.segment === 'legacy' ? ' · 已停产' : '');
+      });
 
     var aibs = DB.aibs.filter(function (a) { return a.gpuId === S.gpuId; });
     var curGpu = DB.gpus.filter(function (x) { return x.id === S.gpuId; })[0];
@@ -259,14 +495,16 @@
       var r = DB.ram.filter(function (x) { return x.id === op.value; })[0];
       if (!r) return;
       var t = r.type || 'DDR5';
-      var base = op.textContent.replace(/\s*⚠.*$/, '');
-      op.textContent = base + (t !== mobo.ramType ? '  ⚠ ' + t + ' 与 ' + mobo.ramType + ' 主板不兼容' : '');
+      var base = op.textContent.replace(/\s*·.*$/, '');
+      op.textContent = base + (t !== mobo.ramType ? ' · ' + t + ' 与 ' + mobo.ramType + ' 主板不兼容' : '');
       op.disabled = false;
     });
   }
 
   function initStorage() {
-    S.storage = [{ id: 'ssd-9100pro-2t', qty: 1 }];
+    /* 不预置任何硬盘。这里曾硬编码一行 Gen5 SSD，
+       会让首访的空态带着一个 11W 的存储项。空态就该是空的。 */
+    if (!Array.isArray(S.storage)) S.storage = [];
     $('addStorage').addEventListener('click', function () {
       var used = S.storage.map(function (s) { return s.id; });
       var next = DB.storage.filter(function (s) { return used.indexOf(s.id) === -1; })[0] || DB.storage[0];
@@ -288,7 +526,7 @@
       return '<div class="storage-row">' +
         '<select data-si="' + i + '" class="s-sel">' + opts + '</select>' +
         '<input type="number" min="1" max="8" value="' + s.qty + '" data-qi="' + i + '" class="s-qty">' +
-        '<button class="del" data-di="' + i + '" title="移除">✕</button></div>';
+        '<button class="del" data-di="' + i + '" title="移除">×</button></div>';
     }).join('');
 
     wrap.querySelectorAll('.s-sel').forEach(function (el) {
@@ -366,7 +604,7 @@
       return '<div class="storage-row" style="grid-template-columns:1fr 90px 32px">' +
         '<input type="text" data-cl="' + i + '" placeholder="设备名称" value="' + esc(c.label) + '">' +
         '<input type="number" min="0" step="1" data-cw="' + i + '" placeholder="W" value="' + (c.watts || '') + '">' +
-        '<button class="del" data-cd="' + i + '">✕</button></div>';
+        '<button class="del" data-cd="' + i + '">×</button></div>';
     }).join('');
     wrap.querySelectorAll('[data-cl]').forEach(function (el) {
       el.addEventListener('input', function () { S.customItems[+el.dataset.cl].label = el.value; render(); });
@@ -532,7 +770,7 @@
     var p = r.existingPsu.psu;
     var lv = r.existingPsu.level === 'error' ? 'error' : (r.existingPsu.level === 'warn' ? 'warn' : 'ok');
     box.innerHTML = '<div class="issue ' + lv + '">' +
-      '<span class="ico">' + (lv === 'ok' ? '✓' : (lv === 'error' ? '✕' : '!')) + '</span>' +
+      '<span class="ico">' + (lv === 'ok' ? SVG.ok : (lv === 'error' ? SVG.error : SVG.warn)) + '</span>' +
       '<div><b>负载率 ' + r.existingPsu.utilization + '%（规划功耗 / 额定瓦数）</b>' +
       '<div class="d">' + esc(r.existingPsu.verdict) + '</div>' +
       '<div class="d">场景预期负载率 ' + r.existingPsu.utilizationExpected + '%（' +
@@ -569,9 +807,15 @@
     lastResult = r;
 
     /* --- 核心数字 --- */
-    $('heroPower').innerHTML = r.subtotal + '<small> W</small>';
-    $('heroExpected').innerHTML = r.expected + '<small> W</small>';
-    $('heroTransient').innerHTML = r.transient + '<small> W</small>';
+    // 空态一律显示 "—" 而不是 "0 W"：0 是一个断言（"这套配置耗 0 瓦"），
+    // 而 "—" 是占位（"还不知道"）。用 0 会让首屏看起来像算错了。
+    var EMPTY = '—';
+    $('heroPower').innerHTML = r.hasSelection
+      ? r.subtotal + '<small> W</small>' : EMPTY + '<small> W</small>';
+    $('heroExpected').innerHTML = r.hasSelection
+      ? r.expected + '<small> W</small>' : EMPTY + '<small> W</small>';
+    $('heroTransient').innerHTML = r.hasSelection
+      ? r.transient + '<small> W</small>' : EMPTY + '<small> W</small>';
     // 面向非专业用户：先说"这个数是干什么用的"，再给计算依据
     $('heroPowerNote').textContent = '所有硬件同时吃满电的总和 —— 电源至少要扛得住这个数';
     $('heroExpectedNote').textContent = '你日常实际大概会用掉这么多（' + r.scenarioInfo.label + '）';
@@ -580,16 +824,16 @@
       : '机械硬盘启动瞬间的额外功耗';
 
     /* --- 电源推荐 --- */
-    if (r.subtotal <= 0) {
-      $('recoBig').textContent = '请先选择硬件';
-      $('recoSub').innerHTML = '在上面选好 CPU 和显卡，这里就会出现结果。' +
-        '不确定的话，点左边的「我不会选，先用示例试试」。';
+    if (!r.hasSelection) {
+      // 空态：不给数字、不给结论、不给推荐，只说明下一步做什么
+      $('recoBig').innerHTML = EMPTY + '<span> W</span>';
+      $('recoSub').textContent = '尚未选择硬件';
       $('recoMeta').innerHTML = '';
     } else {
       var sameW = r.recFloor === r.recIdeal;
       $('recoBig').innerHTML = sameW
-        ? r.recIdeal + '<span style="font-size:18px"> W</span>'
-        : r.recFloor + ' ~ ' + r.recIdeal + '<span style="font-size:18px"> W</span>';
+        ? r.recIdeal + '<span> W</span>'
+        : r.recFloor + '–' + r.recIdeal + '<span> W</span>';
       // 结论先行：直接告诉用户"买多大"，再附上计算依据
       $('recoSub').innerHTML = sameW
         ? '买 <b>' + r.recIdeal + 'W</b> 的电源即可。' +
@@ -615,6 +859,26 @@
     /* --- 问题列表 --- */
     renderIssues(r);
 
+    /* --- 顶栏答案筹码 ---
+       顶栏是 sticky 的，所以这是「任何滚动位置都能看到推荐瓦数」的实现。
+       窄屏另有底部常驻条（ui.js 维护），两者数值同源。 */
+    var chip = $('answerChip');
+    if (chip) {
+      if (!r.hasSelection) {
+        chip.hidden = true;
+      } else {
+        chip.hidden = false;
+        $('answerChipValue').textContent = (r.recFloor === r.recIdeal)
+          ? r.recIdeal + ' W'
+          : r.recFloor + '–' + r.recIdeal + ' W';
+        var nErr = r.issues.filter(function (i) { return i.level === 'error'; }).length;
+        var nWarn = r.issues.filter(function (i) { return i.level === 'warn'; }).length;
+        var ib = $('answerChipIssues');
+        ib.textContent = nErr ? nErr + ' 错误' : (nWarn ? nWarn + ' 警告' : '');
+        ib.className = 'ac-issues' + (nErr ? ' has-error' : '');
+      }
+    }
+
     /* --- 升级空间 --- */
     renderUpgrade(r);
 
@@ -629,17 +893,28 @@
 
     /* --- 打印元信息 --- */
     $('printMeta').textContent = '生成时间 ' + new Date().toLocaleString('zh-CN') +
-      ' · 数据版本 ' + DB.meta.version + ' · 规划功耗 ' + r.subtotal + 'W · 推荐电源 ' +
-      r.recFloor + '~' + r.recIdeal + 'W';
+      ' · 数据版本 ' + DB.meta.version +
+      (r.hasSelection
+        ? ' · 规划功耗 ' + r.subtotal + 'W · 推荐电源 ' +
+          (r.recFloor === r.recIdeal ? r.recIdeal : r.recFloor + '–' + r.recIdeal) + 'W'
+        : ' · 未选择硬件');
   }
 
   function renderPicks(r) {
     var roles = [
-      { k: 'value', label: '性价比之选', cls: '' },
-      { k: 'balanced', label: '均衡之选', cls: 'blue' },
-      { k: 'flagship', label: '旗舰之选', cls: 'warn' }
+      { k: 'value', label: '性价比之选' },
+      { k: 'balanced', label: '均衡之选' },
+      { k: 'flagship', label: '旗舰之选' }
     ];
     var box = $('psuPicks');
+
+    // 空态：不推荐任何电源
+    if (!r.hasSelection) {
+      box.innerHTML = '<div class="empty">选好硬件后，这里会列出三档推荐电源</div>';
+      $('psuPickHint').textContent = '';
+      $('psuPickNote').innerHTML = '';
+      return;
+    }
     if (!r.picks.value && !r.picks.balanced && !r.picks.flagship) {
       box.innerHTML = '<div class="empty">没有满足接口与瓦数要求的电源型号</div>';
       $('psuPickHint').textContent = '';
@@ -683,7 +958,7 @@
 
   function renderIssues(r) {
     var box = $('issues');
-    var icons = { error: '✕', warn: '!', info: 'i', ok: '✓' };
+    var icons = { error: SVG.error, warn: SVG.warn, info: SVG.info, ok: SVG.ok };
     var order = { error: 0, warn: 1, info: 2, ok: 3 };
     var list = r.issues.slice().sort(function (a, b) { return order[a.level] - order[b.level]; });
 
@@ -692,8 +967,18 @@
         list.filter(function (i) { return i.level === 'warn'; }).length + ' 警告'
       : '';
 
+    // 空态必须走中性态，绝不能打绿勾。
+    // 「什么都没选」时 issues 天然为空，若照常输出「未检测到兼容性问题 · 均匹配」，
+    // 就等于在没有任何输入的情况下宣称校验通过 —— 这是最伤可信度的写法。
+    if (!r.hasSelection) {
+      box.innerHTML = '<div class="issue info"><span class="ico">i</span><div>' +
+        '<b>尚未选择硬件</b>' +
+        '<div class="d">选好 CPU、显卡、主板后，这里会列出兼容性检查结果。</div>' +
+        '</div></div>';
+      return;
+    }
     if (!list.length) {
-      box.innerHTML = '<div class="issue ok"><span class="ico">✓</span><div>' +
+      box.innerHTML = '<div class="issue ok"><span class="ico">' + SVG.ok + '</span><div>' +
         '<b>未检测到兼容性问题</b><div class="d">所选硬件组合的插槽、板型、尺寸、供电接口与内存规格均匹配。</div>' +
         '</div></div>';
       return;
@@ -710,7 +995,7 @@
 
   function renderUpgrade(r) {
     var box = $('upgradeBox');
-    if (!r.upgrade) { box.innerHTML = '<div class="empty">请先选择硬件</div>'; return; }
+    if (!r.upgrade) { box.innerHTML = '<div class="empty">选好硬件后才能推演升级空间</div>'; return; }
     var u = r.upgrade;
     box.innerHTML =
       '<dl class="kv">' +
@@ -771,10 +1056,10 @@
     }, budget);
 
     var box = $('adviceBox');
-    if (!adv.tips.length) { box.innerHTML = '<div class="empty">请先选择硬件</div>'; return; }
+    if (!adv.tips.length) { box.innerHTML = '<div class="empty">选好硬件后才能给出平衡建议</div>'; return; }
     box.innerHTML = adv.tips.map(function (t) {
       return '<div class="issue ' + t.level + '">' +
-        '<span class="ico">' + ({ info: 'i', warn: '!', ok: '✓' }[t.level] || '·') + '</span>' +
+        '<span class="ico">' + ({ info: SVG.info, warn: SVG.warn, ok: SVG.ok }[t.level] || '·') + '</span>' +
         '<div><b>' + esc(t.title) + '</b>' +
         '<div class="d">' + esc(t.detail) + '</div>' +
         (t.note ? '<div class="f">' + esc(t.note) + '</div>' : '') + '</div></div>';
@@ -784,6 +1069,7 @@
   /* ============================================================ 主渲染 = */
   function render() {
     try {
+      refreshCpuCascade();
       refreshGpuCascade();
       refreshStorage();
       refreshCustomItems();
@@ -850,7 +1136,9 @@
       });
     rows.push([]);
     rows.push(['—— 兼容性与风险提示 ——']);
-    if (!r.issues.length) rows.push(['未检测到兼容性问题']);
+    if (!r.issues.length) {
+      rows.push([r.hasSelection ? '未检测到兼容性问题' : '尚未选择硬件，无可校验项']);
+    }
     r.issues.forEach(function (i) {
       rows.push([i.level, i.title, i.detail, i.fix || '']);
     });
@@ -925,7 +1213,7 @@
       feedback.map(function (f, i) {
         return '<tr><td>' + esc(f.type) + '</td><td class="nm">' + esc(f.name) + '</td>' +
           '<td class="wt">' + (f.watts || '—') + '</td><td class="dt">' + esc(f.note || '') + '</td>' +
-          '<td><button class="del" data-fd="' + i + '">✕</button></td></tr>';
+          '<td><button class="del" data-fd="' + i + '">×</button></td></tr>';
       }).join('') + '</tbody></table>';
     box.querySelectorAll('[data-fd]').forEach(function (el) {
       el.addEventListener('click', function () { feedback.splice(+el.dataset.fd, 1); renderFeedback(); save(); });
@@ -1068,6 +1356,11 @@
     if (!p) return;
     S.cpuCustomW = ''; S.gpuCustomName = ''; S.gpuCustomW = ''; S.customItems = [];
     Object.keys(p).forEach(function (k) { S[k] = p[k]; });
+    /* 预设会把筛选器彻底重置：示例里可能是 AMD 的 U 配 NVIDIA 的卡，
+       如果留着用户上一次的「Intel / GTX 10 系」筛选，型号下拉里
+       根本看不到刚载入的那颗 CPU / 那块卡。 */
+    normalizeCpuFilter();
+    normalizeGpuFilter();
     syncInputsFromState();
     render();
     toast('已载入示例配置：' + name);
@@ -1089,8 +1382,19 @@
       initPsu();
       initFeedback();
 
-      var restored = load();
-      if (!restored) applyPresetSilent('flagship');
+      /* 首访渲染「空配置」，不静默灌入任何预设。
+         以前这里写的是 if (!restored) applyPresetSilent('flagship')，
+         结果是新用户第一眼看到的是别人机器的 RTX 5090 配置和 1200W 推荐值，
+         而顶栏还摆着「载入示例配置」按钮 —— 状态与按钮自相矛盾，
+         也违背「结论必须来自用户自己的输入」这一前提。
+         现在：localStorage 有记录才恢复，否则就是干净的空态，
+         示例配置改由 #btnQuickStart 显式载入。 */
+      load();
+      /* 从 localStorage 恢复出来的「筛选器 + 型号」可能对不上
+         （比如上次是 Intel 12 代，这次数据库升版后那颗 CPU 改了世代）。
+         修正只做这一次，交互期间不再插手，否则筛选器会按不动。 */
+      normalizeCpuFilter();
+      normalizeGpuFilter();
       syncInputsFromState();
       renderFeedback();
       render();
@@ -1105,40 +1409,46 @@
         try { localStorage.setItem(GUIDE_KEY, '1'); } catch (e) {}
       });
 
-      /* "先用示例试试"：循环载入几个有代表性的配置，
-         让对方先看到结果长什么样，再动手改 */
+      /* 显式载入示例：循环切换几种有代表性的配置 */
       var quickKeys = ['flagship', 'amd', 'creator', 'office'];
       var quickLabels = {
-        flagship: '高端游戏主机（RTX 5090）',
-        amd: 'AMD 平台游戏机（RX 9070 XT）',
-        creator: '内容创作 / 渲染工作站',
-        office: '办公机（核显）'
+        flagship: '高端游戏主机',
+        amd: 'AMD 游戏机',
+        creator: '创作工作站',
+        office: '办公机'
       };
       var qi = 0;
       $('btnQuickStart').addEventListener('click', function () {
         var k = quickKeys[qi % quickKeys.length];
         applyPreset(k);
         qi++;
-        this.textContent = '换个例子试试（' + quickLabels[quickKeys[qi % quickKeys.length]] + '）';
+        // 不带括号嵌套，避免出现「换个示例（AMD 平台游戏机（RX 9070 XT））」
+        this.textContent = '换个示例：' + quickLabels[quickKeys[qi % quickKeys.length]];
       });
 
-      $('btnPreset').addEventListener('click', function () { applyPreset('flagship'); });
       $('btnReset').addEventListener('click', function () {
         try { localStorage.removeItem(LS_KEY); } catch (e) {}
         location.reload();
       });
-      $('btnTheme').addEventListener('click', function () {
+
+      /* 主题切换：图标 + 文字两个部分，文字在 .theme-label 里 */
+      var themeBtn = $('btnTheme');
+      function paintThemeBtn(theme) {
+        var lab = themeBtn.querySelector('.theme-label');
+        if (lab) lab.textContent = theme === 'dark' ? '浅色' : '深色';
+      }
+      themeBtn.addEventListener('click', function () {
         var cur = document.documentElement.getAttribute('data-theme');
         var next = cur === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
-        this.textContent = next === 'dark' ? '☀ 浅色' : '🌙 深色';
+        paintThemeBtn(next);
         try { localStorage.setItem(LS_KEY + '-theme', next); } catch (e) {}
       });
       try {
         var th = localStorage.getItem(LS_KEY + '-theme');
         if (th) {
           document.documentElement.setAttribute('data-theme', th);
-          $('btnTheme').textContent = th === 'dark' ? '☀ 浅色' : '🌙 深色';
+          paintThemeBtn(th);
         }
       } catch (e) {}
 
@@ -1154,14 +1464,7 @@
         save();
       });
 
-      // 支持"载入示例配置"循环切换
-      var presetKeys = Object.keys(PRESETS), pi = 0;
-      $('btnPreset').onclick = function () {
-        pi = (pi + 1) % presetKeys.length;
-        applyPreset(presetKeys[pi]);
-      };
-
-      console.log('%c整机功耗计算工具已就绪', 'color:#35d0a8;font-weight:700',
+      console.log('%c整机功耗计算器已就绪', 'color:#ff0033;font-weight:700',
         '\n数据库版本', DB.meta.version, '| 条目', DB.meta.counts);
 
       /* 调试 / 脚本化钩子：
@@ -1184,11 +1487,8 @@
     } catch (e) { errMsg(e); }
   }
 
-  function applyPresetSilent(name) {
-    var p = PRESETS[name];
-    if (!p) return;
-    Object.keys(p).forEach(function (k) { S[k] = p[k]; });
-  }
+  /* applyPresetSilent 已移除：首访不再静默灌入预设配置。
+     示例配置统一由 applyPreset()（显式点击）载入。 */
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

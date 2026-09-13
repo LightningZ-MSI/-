@@ -1,11 +1,11 @@
 /* ============================================================================
  *  硬件功耗数据库  HWDB  ——  主装配文件
- *  版本: 2026.09.2   数据截止: 2026-09-13
+ *  版本: 2026.09.6   数据截止: 2026-09-13
  * ----------------------------------------------------------------------------
  *  模块划分（加载顺序不可调换）:
  *    js/db-cpus.js   桌面处理器（Intel 10/11/12/13/14 代 + Core Ultra 200S 系列；
- *                    AMD AM4 全系 + AM5 全系），约 140 款
- *    js/db-aib.js    AIC 厂商系列目录 + 规则生成器（28 家厂商 / 70+ 系列）
+ *                    AMD AM4 全系 + AM5 全系），164 款，含世代分组元数据
+ *    js/db-aib.js    AIC 厂商系列目录 + 规则生成器（23 家厂商 / 85 系列）
  *    js/db.js        本文件：来源表、平台表、GPU、主板、内存、存储、散热、电源
  *
  *  confidence 语义:
@@ -145,19 +145,19 @@
       connector: '1× 12V-2x6 (16pin)', pcie: 'PCIe 5.0 x16', slots: 2,
       transient: 1.8, released: '未发布', price: 0,
       confidence: 'leak', source: 'ithome50super',
-      note: '⚠️ NVIDIA 未发布。TGP 415W 来自海韵电源计算器录入值。仅供前瞻推演。' },
+      note: '注意：NVIDIA 未发布。TGP 415W 来自海韵电源计算器录入值。仅供前瞻推演。' },
     { id: 'rtx5070tisuper', brand: 'NVIDIA', family: 'GeForce RTX 50 SUPER (未发布)',
       name: 'GeForce RTX 5070 Ti SUPER', tbp: 350, memory: '24GB GDDR7 (3GB 颗粒)',
       connector: '1× 12V-2x6 (16pin)', pcie: 'PCIe 5.0 x16', slots: 2,
       transient: 1.8, released: '未发布', price: 0,
       confidence: 'leak', source: 'ithome50super',
-      note: '⚠️ NVIDIA 未发布。TGP 350W 来自海韵电源计算器录入值。' },
+      note: '注意：NVIDIA 未发布。TGP 350W 来自海韵电源计算器录入值。' },
     { id: 'rtx5070super', brand: 'NVIDIA', family: 'GeForce RTX 50 SUPER (未发布)',
       name: 'GeForce RTX 5070 SUPER', tbp: 275, memory: '18GB GDDR7 (3GB 颗粒)',
       connector: '1× 12V-2x6 (16pin)', pcie: 'PCIe 5.0 x16', slots: 2,
       transient: 1.8, released: '未发布', price: 0,
       confidence: 'leak', source: 'ithome50super',
-      note: '⚠️ NVIDIA 未发布。TGP 275W 来自海韵电源计算器录入值。' },
+      note: '注意：NVIDIA 未发布。TGP 275W 来自海韵电源计算器录入值。' },
     /* ---------------------------------------------------- NVIDIA 上代 ----- */
     { id: 'rtx4090', brand: 'NVIDIA', family: 'GeForce RTX 40 (Ada)',
       name: 'GeForce RTX 4090', tbp: 450, memory: '24GB GDDR6X 384-bit',
@@ -228,8 +228,309 @@
       name: 'Arc A770', tbp: 225, memory: '16GB GDDR6 256-bit',
       connector: '1× 8pin + 1× 6pin', pcie: 'PCIe 4.0 x16', slots: 2,
       transient: 1.6, released: '2022-10', price: 2299,
+      confidence: 'official', source: 'tpuGpuDb' },
+
+    /* ==================================================== 老卡 / 二手主力 ==
+     * 覆盖面按需求扩到「GTX 900 系 ~ RTX 30 系」及其同期 A 卡。
+     * 这些卡在二手市场的保有量远大于新品，装机时同样需要算准电源。
+     *
+     * ⚠️ 功耗语义与新品不同，取值时请注意：
+     *   · TBP 为厂商标称板功耗（TechPowerUp GPU Database 通行值）
+     *   · 老卡的瞬时峰值倍率普遍低于 50 系（供电模块响应慢、但 GPU 功耗低）
+     *   · 部分卡（如 GTX 960 / 1050）功耗极低，很多不需要外接供电
+     * ===================================================================== */
+    /* ------------------------------------------------------ NVIDIA GTX 900 */
+    { id: 'gtx950', brand: 'NVIDIA', family: 'GeForce GTX 900 (Maxwell)',
+      name: 'GeForce GTX 950', tbp: 90, memory: '2GB GDDR5 128-bit',
+      connector: '1× 6pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.5, released: '2015-08', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'gtx960', brand: 'NVIDIA', family: 'GeForce GTX 900 (Maxwell)',
+      name: 'GeForce GTX 960', tbp: 120, memory: '2GB / 4GB GDDR5 128-bit',
+      connector: '1× 6pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.5, released: '2015-01', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'gtx970', brand: 'NVIDIA', family: 'GeForce GTX 900 (Maxwell)',
+      name: 'GeForce GTX 970', tbp: 145, memory: '4GB GDDR5 256-bit',
+      connector: '2× 6pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.5, released: '2014-09', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'gtx980', brand: 'NVIDIA', family: 'GeForce GTX 900 (Maxwell)',
+      name: 'GeForce GTX 980', tbp: 165, memory: '4GB GDDR5 256-bit',
+      connector: '2× 6pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.5, released: '2014-09', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'gtx980ti', brand: 'NVIDIA', family: 'GeForce GTX 900 (Maxwell)',
+      name: 'GeForce GTX 980 Ti', tbp: 250, memory: '6GB GDDR5 384-bit',
+      connector: '1× 8pin + 1× 6pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.5, released: '2015-06', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+
+    /* ------------------------------------------------------- NVIDIA GTX 10 */
+    { id: 'gtx1050', brand: 'NVIDIA', family: 'GeForce GTX 10 (Pascal)',
+      name: 'GeForce GTX 1050', tbp: 75, memory: '2GB GDDR5 128-bit',
+      connector: '无需外接供电', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.4, released: '2016-10', price: 0,
+      confidence: 'official', source: 'tpuGpuDb',
+      note: '75W 卡，多数型号无需外接供电，是低功耗办公机的常见选择。' },
+    { id: 'gtx1050ti', brand: 'NVIDIA', family: 'GeForce GTX 10 (Pascal)',
+      name: 'GeForce GTX 1050 Ti', tbp: 75, memory: '4GB GDDR5 128-bit',
+      connector: '无需外接供电', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.4, released: '2016-10', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'gtx1060', brand: 'NVIDIA', family: 'GeForce GTX 10 (Pascal)',
+      name: 'GeForce GTX 1060 6GB', tbp: 120, memory: '6GB GDDR5 192-bit',
+      connector: '1× 6pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.5, released: '2016-07', price: 0,
+      confidence: 'official', source: 'tpuGpuDb',
+      note: '二手市场保有量极大，是「老平台升级」的常见目标。' },
+    { id: 'gtx1650', brand: 'NVIDIA', family: 'GeForce GTX 16 (Turing)',
+      name: 'GeForce GTX 1650', tbp: 75, memory: '4GB GDDR5/GDDR6 128-bit',
+      connector: '无需外接供电（部分型号 1× 6pin）', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.4, released: '2019-04', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'gtx1660', brand: 'NVIDIA', family: 'GeForce GTX 16 (Turing)',
+      name: 'GeForce GTX 1660', tbp: 120, memory: '6GB GDDR5 192-bit',
+      connector: '1× 8pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.5, released: '2019-03', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'gtx1660super', brand: 'NVIDIA', family: 'GeForce GTX 16 (Turing)',
+      name: 'GeForce GTX 1660 SUPER', tbp: 125, memory: '6GB GDDR6 192-bit',
+      connector: '1× 8pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.5, released: '2019-10', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'gtx1660ti', brand: 'NVIDIA', family: 'GeForce GTX 16 (Turing)',
+      name: 'GeForce GTX 1660 Ti', tbp: 120, memory: '6GB GDDR6 192-bit',
+      connector: '1× 8pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.5, released: '2019-02', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'gtx1070', brand: 'NVIDIA', family: 'GeForce GTX 10 (Pascal)',
+      name: 'GeForce GTX 1070', tbp: 150, memory: '8GB GDDR5 256-bit',
+      connector: '1× 8pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.5, released: '2016-06', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'gtx1070ti', brand: 'NVIDIA', family: 'GeForce GTX 10 (Pascal)',
+      name: 'GeForce GTX 1070 Ti', tbp: 180, memory: '8GB GDDR5 256-bit',
+      connector: '1× 8pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.5, released: '2017-11', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'gtx1080', brand: 'NVIDIA', family: 'GeForce GTX 10 (Pascal)',
+      name: 'GeForce GTX 1080', tbp: 180, memory: '8GB GDDR5X 256-bit',
+      connector: '1× 8pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.5, released: '2016-05', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'gtx1080ti', brand: 'NVIDIA', family: 'GeForce GTX 10 (Pascal)',
+      name: 'GeForce GTX 1080 Ti', tbp: 250, memory: '11GB GDDR5X 352-bit',
+      connector: '1× 8pin + 1× 6pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.6, released: '2017-03', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+
+    /* -------------------------------------------------------- NVIDIA RTX 20 */
+    { id: 'rtx2060', brand: 'NVIDIA', family: 'GeForce RTX 20 (Turing)',
+      name: 'GeForce RTX 2060', tbp: 160, memory: '6GB GDDR6 192-bit',
+      connector: '1× 8pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.7, released: '2019-01', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rtx2060super', brand: 'NVIDIA', family: 'GeForce RTX 20 (Turing)',
+      name: 'GeForce RTX 2060 SUPER', tbp: 175, memory: '8GB GDDR6 256-bit',
+      connector: '1× 8pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.7, released: '2019-07', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rtx2070', brand: 'NVIDIA', family: 'GeForce RTX 20 (Turing)',
+      name: 'GeForce RTX 2070', tbp: 175, memory: '8GB GDDR6 256-bit',
+      connector: '1× 8pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.7, released: '2018-10', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rtx2070super', brand: 'NVIDIA', family: 'GeForce RTX 20 (Turing)',
+      name: 'GeForce RTX 2070 SUPER', tbp: 215, memory: '8GB GDDR6 256-bit',
+      connector: '1× 8pin + 1× 6pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.7, released: '2019-07', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rtx2080', brand: 'NVIDIA', family: 'GeForce RTX 20 (Turing)',
+      name: 'GeForce RTX 2080', tbp: 215, memory: '8GB GDDR6 256-bit',
+      connector: '1× 8pin + 1× 6pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.8, released: '2018-09', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rtx2080super', brand: 'NVIDIA', family: 'GeForce RTX 20 (Turing)',
+      name: 'GeForce RTX 2080 SUPER', tbp: 250, memory: '8GB GDDR6 256-bit',
+      connector: '1× 8pin + 1× 6pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.8, released: '2019-07', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rtx2080ti', brand: 'NVIDIA', family: 'GeForce RTX 20 (Turing)',
+      name: 'GeForce RTX 2080 Ti', tbp: 250, memory: '11GB GDDR6 352-bit',
+      connector: '2× 8pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.8, released: '2018-09', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+
+    /* -------------------------------------------------------- NVIDIA RTX 30 */
+    { id: 'rtx3050', brand: 'NVIDIA', family: 'GeForce RTX 30 (Ampere)',
+      name: 'GeForce RTX 3050', tbp: 130, memory: '8GB GDDR6 128-bit',
+      connector: '1× 8pin', pcie: 'PCIe 4.0 x8', slots: 2,
+      transient: 1.7, released: '2022-01', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rtx3060', brand: 'NVIDIA', family: 'GeForce RTX 30 (Ampere)',
+      name: 'GeForce RTX 3060', tbp: 170, memory: '12GB GDDR6 192-bit',
+      connector: '1× 8pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 1.8, released: '2021-02', price: 0,
+      confidence: 'official', source: 'tpuGpuDb',
+      note: '二手市场最热门的型号之一，12GB 版 TBP 170W。' },
+    { id: 'rtx3060ti', brand: 'NVIDIA', family: 'GeForce RTX 30 (Ampere)',
+      name: 'GeForce RTX 3060 Ti', tbp: 200, memory: '8GB GDDR6 256-bit',
+      connector: '1× 8pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 1.8, released: '2020-12', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rtx3070', brand: 'NVIDIA', family: 'GeForce RTX 30 (Ampere)',
+      name: 'GeForce RTX 3070', tbp: 220, memory: '8GB GDDR6 256-bit',
+      connector: '1× 8pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 1.9, released: '2020-10', price: 0,
+      confidence: 'official', source: 'tpuGpuDb',
+      note: '30 系瞬时尖峰较明显，配电源时余量要给足。' },
+    { id: 'rtx3070ti', brand: 'NVIDIA', family: 'GeForce RTX 30 (Ampere)',
+      name: 'GeForce RTX 3070 Ti', tbp: 290, memory: '8GB GDDR6X 256-bit',
+      connector: '2× 8pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 1.9, released: '2021-06', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rtx3080', brand: 'NVIDIA', family: 'GeForce RTX 30 (Ampere)',
+      name: 'GeForce RTX 3080', tbp: 320, memory: '10GB GDDR6X 320-bit',
+      connector: '2× 8pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 2.0, released: '2020-09', price: 0,
+      confidence: 'official', source: 'tpuGpuDb',
+      note: '瞬时峰值可达 2 倍 TBP，是「老平台换电源」最常踩的坑。' },
+    { id: 'rtx3080ti', brand: 'NVIDIA', family: 'GeForce RTX 30 (Ampere)',
+      name: 'GeForce RTX 3080 Ti', tbp: 350, memory: '12GB GDDR6X 384-bit',
+      connector: '2× 8pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 2.0, released: '2021-06', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rtx3090', brand: 'NVIDIA', family: 'GeForce RTX 30 (Ampere)',
+      name: 'GeForce RTX 3090', tbp: 350, memory: '24GB GDDR6X 384-bit',
+      connector: '2× 8pin', pcie: 'PCIe 4.0 x16', slots: 3,
+      transient: 2.0, released: '2020-09', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rtx3090ti', brand: 'NVIDIA', family: 'GeForce RTX 30 (Ampere)',
+      name: 'GeForce RTX 3090 Ti', tbp: 450, memory: '24GB GDDR6X 384-bit',
+      connector: '1× 12VHPWR (16pin)', pcie: 'PCIe 4.0 x16', slots: 3,
+      transient: 2.0, released: '2022-03', price: 0,
+      confidence: 'official', source: 'tpuGpuDb',
+      note: '首款使用 12VHPWR 接口的消费级显卡，配老电源需转接线。' },
+
+    /* ------------------------------------------- AMD 同期（RX 500 / 5000 / 6000） */
+    { id: 'rx580', brand: 'AMD', family: 'Radeon RX 500 (Polaris)',
+      name: 'Radeon RX 580', tbp: 185, memory: '8GB GDDR5 256-bit',
+      connector: '1× 8pin', pcie: 'PCIe 3.0 x16', slots: 2,
+      transient: 1.6, released: '2017-04', price: 0,
+      confidence: 'official', source: 'tpuGpuDb',
+      note: '矿卡保有量极大，二手购买时注意供电接口与老化。' },
+    { id: 'rx5700xt', brand: 'AMD', family: 'Radeon RX 5000 (RDNA)',
+      name: 'Radeon RX 5700 XT', tbp: 225, memory: '8GB GDDR6 256-bit',
+      connector: '1× 8pin + 1× 6pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 1.7, released: '2019-07', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rx5700', brand: 'AMD', family: 'Radeon RX 5000 (RDNA)',
+      name: 'Radeon RX 5700', tbp: 180, memory: '8GB GDDR6 256-bit',
+      connector: '1× 8pin + 1× 6pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 1.7, released: '2019-07', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rx6600', brand: 'AMD', family: 'Radeon RX 6000 (RDNA 2)',
+      name: 'Radeon RX 6600', tbp: 132, memory: '8GB GDDR6 128-bit',
+      connector: '1× 8pin', pcie: 'PCIe 4.0 x8', slots: 2,
+      transient: 1.6, released: '2021-10', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rx6600xt', brand: 'AMD', family: 'Radeon RX 6000 (RDNA 2)',
+      name: 'Radeon RX 6600 XT', tbp: 160, memory: '8GB GDDR6 128-bit',
+      connector: '1× 8pin', pcie: 'PCIe 4.0 x8', slots: 2,
+      transient: 1.6, released: '2021-08', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rx6650xt', brand: 'AMD', family: 'Radeon RX 6000 (RDNA 2)',
+      name: 'Radeon RX 6650 XT', tbp: 180, memory: '8GB GDDR6 128-bit',
+      connector: '1× 8pin', pcie: 'PCIe 4.0 x8', slots: 2,
+      transient: 1.6, released: '2022-05', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rx6700xt', brand: 'AMD', family: 'Radeon RX 6000 (RDNA 2)',
+      name: 'Radeon RX 6700 XT', tbp: 230, memory: '12GB GDDR6 192-bit',
+      connector: '1× 8pin + 1× 6pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 1.7, released: '2021-03', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rx6750xt', brand: 'AMD', family: 'Radeon RX 6000 (RDNA 2)',
+      name: 'Radeon RX 6750 XT', tbp: 250, memory: '12GB GDDR6 192-bit',
+      connector: '1× 8pin + 1× 6pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 1.7, released: '2022-05', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rx6800', brand: 'AMD', family: 'Radeon RX 6000 (RDNA 2)',
+      name: 'Radeon RX 6800', tbp: 250, memory: '16GB GDDR6 256-bit',
+      connector: '2× 8pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 1.8, released: '2020-11', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rx6800xt', brand: 'AMD', family: 'Radeon RX 6000 (RDNA 2)',
+      name: 'Radeon RX 6800 XT', tbp: 300, memory: '16GB GDDR6 256-bit',
+      connector: '2× 8pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 1.8, released: '2020-11', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rx6900xt', brand: 'AMD', family: 'Radeon RX 6000 (RDNA 2)',
+      name: 'Radeon RX 6900 XT', tbp: 300, memory: '16GB GDDR6 256-bit',
+      connector: '2× 8pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 1.8, released: '2020-12', price: 0,
+      confidence: 'official', source: 'tpuGpuDb' },
+    { id: 'rx6950xt', brand: 'AMD', family: 'Radeon RX 6000 (RDNA 2)',
+      name: 'Radeon RX 6950 XT', tbp: 335, memory: '16GB GDDR6 256-bit',
+      connector: '2× 8pin', pcie: 'PCIe 4.0 x16', slots: 2,
+      transient: 1.8, released: '2022-05', price: 0,
       confidence: 'official', source: 'tpuGpuDb' }
   ];
+
+  /* ------------------------------------------------------ 世代与年代标注 --
+   * 两个用途：
+   *   ① GPU 三级筛选（品牌 → 世代 → 型号）
+   *   ② 约束 AIC 系列目录：不能让 2025 年才出现的 ROG Astral 长到 GTX 970 上。
+   *      系列可用 since（年份）声明它最早存在于哪一年，build() 据此过滤。
+   * ----------------------------------------------------------------------*/
+  var GEN_MAP = {
+    'GeForce RTX 50 (Blackwell)':        { id: 'rtx50', label: 'RTX 50 系', year: 2025, segment: 'current' },
+    'GeForce RTX 50 SUPER (未发布)':      { id: 'rtx50', label: 'RTX 50 系', year: 2026, segment: 'unreleased' },
+    'GeForce RTX 40 (Ada)':              { id: 'rtx40', label: 'RTX 40 系', year: 2022, segment: 'current' },
+    'GeForce RTX 30 (Ampere)':           { id: 'rtx30', label: 'RTX 30 系', year: 2020, segment: 'legacy' },
+    'GeForce RTX 20 (Turing)':           { id: 'rtx20', label: 'RTX 20 系', year: 2018, segment: 'legacy' },
+    'GeForce GTX 16 (Turing)':           { id: 'gtx16', label: 'GTX 16 系', year: 2019, segment: 'legacy' },
+    'GeForce GTX 10 (Pascal)':           { id: 'gtx10', label: 'GTX 10 系', year: 2016, segment: 'legacy' },
+    'GeForce GTX 900 (Maxwell)':         { id: 'gtx900', label: 'GTX 900 系', year: 2014, segment: 'legacy' },
+    'Radeon RX 9000 (RDNA 4)':           { id: 'rx9000', label: 'RX 9000 系', year: 2025, segment: 'current' },
+    'Radeon RX 7000 (RDNA 3)':           { id: 'rx7000', label: 'RX 7000 系', year: 2022, segment: 'current' },
+    'Radeon RX 6000 (RDNA 2)':           { id: 'rx6000', label: 'RX 6000 系', year: 2020, segment: 'legacy' },
+    'Radeon RX 5000 (RDNA)':             { id: 'rx5000', label: 'RX 5000 系', year: 2019, segment: 'legacy' },
+    'Radeon RX 500 (Polaris)':           { id: 'rx500', label: 'RX 500 系', year: 2017, segment: 'legacy' },
+    'Arc B-Series (Battlemage)':         { id: 'arcb', label: 'Arc B 系', year: 2024, segment: 'current' },
+    'Arc A-Series (Alchemist)':          { id: 'arca', label: 'Arc A 系', year: 2022, segment: 'legacy' }
+  };
+
+  GPUS.forEach(function (g) {
+    var m = GEN_MAP[g.family] || { id: 'other', label: '其他', year: 2020, segment: 'legacy' };
+    g.gen = m.id;
+    g.genLabel = m.label;
+    g.year = m.year;
+    g.segment = m.segment;
+  });
+
+  /* GPU 世代的展示顺序：新品在前，老卡在后 */
+  var GPU_GEN_ORDER = [
+    'rtx50', 'rtx40', 'rx9000', 'rx7000', 'arcb',
+    'rtx30', 'rtx20', 'gtx16', 'gtx10', 'gtx900',
+    'rx6000', 'rx5000', 'rx500', 'arca'
+  ];
+  var GPU_GEN_META = {};
+  GPUS.forEach(function (g) {
+    var cur = GPU_GEN_META[g.gen];
+    if (!cur) {
+      GPU_GEN_META[g.gen] = {
+        id: g.gen, label: g.genLabel, brand: g.brand,
+        year: g.year, segment: g.segment
+      };
+    } else if (cur.segment === 'unreleased' && g.segment !== 'unreleased') {
+      /* 一个世代里可能同时有已发布型号和未发布型号（RTX 50 与 RTX 50 SUPER
+         都归到 rtx50）。只按数组里先出现的那个定 segment 太脆弱，
+         优先采信「已发布」的说法。 */
+      cur.segment = g.segment;
+    }
+  });
+
 
   /* ========================================================== 主板 ========
    *  watts: 主板自身功耗（芯片组 + VRM 转换损耗 + 板载 RGB / 网卡 / 控制器）
@@ -693,7 +994,7 @@
 
   root.HWDB = {
     meta: {
-      version: '2026.09.5',
+      version: '2026.09.6',
       updated: '2026-09-13',
       title: '台式机功耗与电源选型数据库',
       counts: {
@@ -711,7 +1012,11 @@
     sources: SOURCES,
     platforms: PLATFORMS,
     cpus: CPU_DB,
+    cpuGenOrder: root.HWDB_CPU_GEN_ORDER,
+    cpuGenMeta: root.HWDB_CPU_GEN_META,
     gpus: GPUS,
+    gpuGenOrder: GPU_GEN_ORDER,
+    gpuGenMeta: GPU_GEN_META,
     aibs: AIBS,
     aibSeries: AIB_DB.series,
     aibCatalogMeta: AIB_DB.catalogMeta,

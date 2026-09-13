@@ -4,39 +4,34 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- ---------------------------------------------------------------- SEO --
-     部署到自己的域名后，请把下面所有 https://example.com/ 替换成真实地址
-     （canonical / og:url / og:image / twitter:image 共 4 处，以及 sitemap.xml、robots.txt）
--->
-<title>台式机功耗计算器 · 电源瓦数怎么选（2026 硬件库）</title>
-<meta name="description" content="免费在线计算台式机整机功耗并推荐电源瓦数。覆盖 Intel Core Ultra 200S / AMD Ryzen 9000 全系处理器与 NVIDIA RTX 50 / AMD RX 9000 显卡，精确到 23 家 AIC 厂商的 800+ 板型，支持 ATX 3.1 与 12V-2x6 接口校验。">
-<meta name="keywords" content="电源计算器,功耗计算,电源瓦数,整机功耗,ATX 3.1,12V-2x6,RTX 5090 电源,Ryzen 9000,装机,电源选择">
-<meta name="author" content="台式机功耗计算器">
+<!-- ---------------------------------------------------------------- SEO -- -->
+<title>台式机功耗计算器 · 电源瓦数怎么选</title>
+<meta name="description" content="选好 CPU、显卡、主板就能算出整机功耗，并直接给出该买多大瓦数的电源。覆盖 164 款 CPU 与 RTX 50 到 GTX 900 的 66 款显卡、23 家 AIC 厂商 2427 个板型，含 ATX 3.1 与 12V-2x6 接口校验。">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://example.com/">
+<link rel="canonical" href="https://lightningz-msi.github.io/-/">
 
 <!-- 主题色：影响移动端浏览器地址栏配色 -->
-<meta name="theme-color" content="#0a0e13" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f2f5f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)">
 <meta name="color-scheme" content="dark light">
 
 <!-- ------------------------------------------------------- 社交分享预览 --
      微信 / QQ / Twitter / 飞书 等分享时展示的卡片。
-     og:image 必须是可公开访问的绝对 URL，且建议 1200×630。 -->
+     og:image 必须是可公开访问的绝对 URL，建议 1200×630。 -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="台式机功耗计算器">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:title" content="台式机功耗计算器 · 电源瓦数怎么选">
-<meta property="og:description" content="选好 CPU、显卡、主板就能算出整机功耗，并直接告诉你该买多大瓦数的电源。覆盖 2026 年最新硬件，含 ATX 3.1 与 12V-2x6 接口校验。">
-<meta property="og:url" content="https://example.com/">
-<meta property="og:image" content="https://example.com/assets/og-image.png">
+<meta property="og:description" content="选好 CPU、显卡、主板就能算出整机功耗，并直接给出该买多大瓦数的电源。164 款 CPU、66 款显卡、2427 个显卡板型，老平台也支持。">
+<meta property="og:url" content="https://lightningz-msi.github.io/-/">
+<meta property="og:image" content="https://lightningz-msi.github.io/-/assets/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="台式机功耗计算器界面预览">
+<meta property="og:image:alt" content="台式机功耗计算器">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="台式机功耗计算器 · 电源瓦数怎么选">
-<meta name="twitter:description" content="选好配置就能算出整机功耗，直接告诉你该买多大瓦数的电源。">
-<meta name="twitter:image" content="https://example.com/assets/og-image.png">
+<meta name="twitter:description" content="选好配置就能算出整机功耗，直接给出该买多大瓦数的电源。164 款 CPU、66 款显卡型号、23 家 AIC 厂商 2427 个板型。">
+<meta name="twitter:image" content="https://lightningz-msi.github.io/-/assets/og-image.png">
 
 <!-- -------------------------------------------------------------- 图标 -- -->
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -60,7 +55,10 @@
     "整机功耗计算",
     "电源瓦数推荐（ATX 3.1）",
     "CPU 与主板插槽兼容性校验",
-    "显卡板型功耗墙区分（23 家 AIC 厂商）",
+    "CPU 三级筛选（品牌 / 系列世代 / 型号，164 款）",
+    "显卡四级筛选（品牌 / 世代 / 型号 / AIC 板型，66 款型号 · 2427 个板型 · 23 家厂商）",
+    "显卡板型功耗墙区分（ROG Astral、SUPRIM、AORUS 等）",
+    "老平台兼容：GTX 900 / 10 系、RTX 20 / 30 系、RX 500 / 5000 / 6000 系",
     "12V-2x6 / PCIe 8pin 接口数量校验"
   ]
 }
@@ -86,38 +84,43 @@
 <header class="top">
   <div class="top-inner">
     <div class="logo">
-      <div class="bolt">⚡</div>
-      <div>
-        整机功耗计算与电源选型
+      <!-- ROG 官方锁定版：图形本体 + REPUBLIC OF GAMERS 字标。
+           两张图都是从华硕官方 logo 图里切出来的（tools/build-logo.mjs）——
+           字标是定制字形，网页字体里没有，只能用图。
+           这里横向排布（图形在左、字标在右），即官方「横向锁定版」的排法；
+           顶栏是横向布局，纵向锁定版会把标题挤下去。
+           用 CSS mask 上色：mask 只取 alpha，颜色由 --rog 给，
+           所以深浅主题切换时 logo 会自动跟着换，不需要维护两套图。 -->
+      <span class="mark" role="img" aria-label="ROG 玩家国度之眼"></span>
+      <span class="wordmark" role="img" aria-label="REPUBLIC OF GAMERS"></span>
+      <div class="logo-text">
+        <h1>台式机功耗计算器</h1>
         <small>数据版本 <span id="dbVersion">—</span> · 截止 <span id="dbDate">—</span></small>
       </div>
     </div>
     <div class="top-actions">
       <span class="tag" id="dbCounts">—</span>
-      <button id="btnPreset" class="ghost">载入示例配置</button>
+      <!-- 答案筹码：顶栏是 sticky 的，所以任何滚动位置都能看到推荐瓦数 -->
+      <span class="answer-chip" id="answerChip" hidden>
+        <span class="ac-label">推荐电源</span>
+        <span class="ac-value" id="answerChipValue">—</span>
+        <span class="ac-issues" id="answerChipIssues"></span>
+      </span>
+      <button id="btnDisclaimer" class="ghost" aria-haspopup="dialog"
+              aria-controls="disclaimerModal">数据声明</button>
       <button id="btnReset" class="ghost">重置</button>
-      <button id="btnTheme" class="ghost">☀ 浅色</button>
+      <button id="btnTheme" class="ghost" aria-label="切换深浅主题">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        </svg>
+        <span class="theme-label">浅色</span>
+      </button>
     </div>
   </div>
 </header>
 
 <div class="wrap">
-
-  <div class="banner">
-    <span>⚠️</span>
-    <div>
-      <b>关于数据可靠性——请先读这一段</b>
-      本工具的所有功耗数值来自厂商规格页、权威评测与公开泄露信息，每一条都标注了
-      <span class="conf official">official</span>
-      <span class="conf review">review</span>
-      <span class="conf estimate">estimate</span>
-      <span class="conf leak">leak</span>
-      置信度与来源链接。<b>电源选型的本质是估算</b>，真实功耗取决于具体软件负载、
-      BIOS 功耗墙设置与环境温度。本结果适合用来排除"明显不够用"的电源，
-      不应替代厂商官方建议。标为 <span class="conf leak">leak</span> 的硬件尚未发布，
-      仅可用于前瞻推演。
-    </div>
-  </div>
 
   <div class="layout">
 
@@ -126,29 +129,34 @@
 
       <!-- 新手引导 -->
       <section class="card guide" id="guideCard">
-        <h2><span class="idx">?</span>第一次用？看这里<span class="hint">30 秒上手</span></h2>
+        <!-- 这一栏没有序号：它不是「第 1 步」，而是说明。原来这里放了个「?」，
+             和前面的 /// 分区标记挤在一起读成「/// ? 使用方法」，很脏。
+             分区标记本身就足以表明这是一个分区。 -->
+        <h2>使用方法<span class="hint">3 步</span>
+          <button id="btnHideGuide" class="card-toggle" type="button" aria-label="关闭引导"></button>
+        </h2>
         <div class="card-body">
-          <p class="guide-lead">
-            这个工具回答一个问题：<b>你这台电脑，该买多大瓦数的电源？</b>
-            电源瓦数买小了会死机重启，买大了只是多花钱，所以宁可略大。
-          </p>
-
           <ol class="guide-steps">
-            <li><b>选左边的硬件</b> —— 从「使用场景」开始往下挨个选。
-                不知道型号也没关系，选个大概的品牌型号就行。</li>
-            <li><b>看右上角的数字</b> —— 找到「推荐电源」那一栏，<b>那个瓦数就是你要买的电源规格</b>。
-                比如显示 <span class="mono">750 W</span>，就买 750W 的电源。</li>
-            <li><b>买之前留意红色提示</b> —— 如果出现红色警告，说明硬件之间装不上，
-                按提示换一个即可。</li>
+            <li>
+              <span class="gi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="8" cy="17" r="2" fill="currentColor" stroke="none"/></svg></span>
+              <b>选硬件</b><span>从上往下选</span>
+            </li>
+            <li>
+              <span class="gi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 L4.5 13.5 H11 L10 22 L19.5 10 H13 Z"/></svg></span>
+              <b>看瓦数</b><span>顶部那个数</span>
+            </li>
+            <li>
+              <span class="gi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L2 20 h20 Z"/><path d="M12 10v4M12 17.5v.01"/></svg></span>
+              <b>查红字</b><span>有红字就换</span>
+            </li>
           </ol>
 
           <div class="guide-actions">
-            <button id="btnQuickStart" class="primary">我不会选，先用示例试试</button>
-            <button id="btnHideGuide" class="ghost">知道了，收起</button>
+            <button id="btnQuickStart" class="primary">载入示例配置</button>
           </div>
 
           <details class="glossary">
-            <summary>看不懂那些术语？（点开有解释）</summary>
+            <summary>术语</summary>
             <dl>
               <dt>规划功耗</dt>
               <dd>把所有硬件「最多能吃多少电」加在一起。电源必须扛得住这个数。</dd>
@@ -189,10 +197,18 @@
 
       <!-- 2. CPU -->
       <section class="card">
-        <h2><span class="idx">2</span>处理器 CPU<span class="hint">请选择最新型号，将基于最新 TDP 计算</span></h2>
+        <h2><span class="idx">2</span>处理器 CPU<span class="hint">三级联动：品牌 → 系列 / 世代 → 型号</span></h2>
         <div class="card-body">
           <div class="field">
-            <label>型号（支持 Intel Core Ultra 系列与 AMD Zen 5 架构）</label>
+            <label>① 品牌</label>
+            <div class="seg" id="cpuBrand"></div>
+          </div>
+          <div class="field">
+            <label>② 系列 / 世代 <span class="unit">（按上市年份由新到旧）</span></label>
+            <select id="cpuGen"></select>
+          </div>
+          <div class="field">
+            <label>③ 型号 <span class="unit">（收录 Intel 10 代起 / AMD Zen 起）</span></label>
             <select id="cpuSelect"></select>
           </div>
           <div class="grid2">
@@ -215,27 +231,22 @@
 
       <!-- 3. 显卡（三级联动） -->
       <section class="card">
-        <h2><span class="idx">3</span>显卡 GPU<span class="hint">三级联动：品牌 → 型号 → AIC 板型</span></h2>
+        <h2><span class="idx">3</span>显卡 GPU<span class="hint">四级联动：品牌 → 世代 → 型号 → AIC 板型</span></h2>
         <div class="card-body">
-          <div class="note accent" style="margin-bottom:12px">
-            <b>关于"显卡适配主板"的说明：</b>同一颗 GPU 由不同 AIC 厂商做成不同
-            <b>板型/PCB</b>（如 ROG Astral、SUPRIM、AORUS MASTER），功耗墙与供电接口各不相同，
-            所以这里选的是<b>显卡板型</b>。至于<b>系统主板</b>（如 Z890 / B850）与 CPU 的插槽兼容性，
-            在第 4 步校验。
-          </div>
-
-          <div class="note warn" style="margin-bottom:12px" id="aibCatalogNote"></div>
-
           <div class="field">
             <label>① 品牌</label>
             <div class="seg" id="gpuBrand"></div>
           </div>
           <div class="field">
-            <label>② 型号</label>
+            <label>② 世代 <span class="unit">（含 GTX 900 / 10 系等已停产老卡）</span></label>
+            <select id="gpuGen"></select>
+          </div>
+          <div class="field">
+            <label>③ 型号</label>
             <select id="gpuModel"></select>
           </div>
           <div class="field">
-            <label>③ AIC 厂商 / 板型 <span class="unit">（影响功耗墙与供电接口）</span></label>
+            <label>④ AIC 厂商 / 板型 <span class="unit">（影响功耗墙与供电接口）</span></label>
             <select id="gpuAib"></select>
           </div>
           <div class="grid2">
@@ -295,7 +306,7 @@
         <h2><span class="idx">6</span>存储<span class="hint">PCIe 5.0 SSD / 大容量 HDD</span></h2>
         <div class="card-body">
           <div id="storageList"></div>
-          <button id="addStorage" class="ghost" style="width:100%;margin-top:4px">＋ 添加一块硬盘 / SSD</button>
+          <button id="addStorage" class="ghost" style="width:100%;margin-top:4px">添加一块硬盘 / SSD</button>
           <div class="note" style="margin-top:11px">
             PCIe 5.0 SSD 峰值功耗约 10-11W（是 SATA SSD 的 3 倍以上），
             多块 Gen5 盘同时满载时容易被忽略；机械硬盘启动瞬间功耗可达运行值的 3 倍。
@@ -352,7 +363,7 @@
           <div class="field">
             <label>自定义设备 <span class="unit">（未收录的扩展卡等）</span></label>
             <div id="customItems"></div>
-            <button id="addCustomItem" class="ghost" style="width:100%;margin-top:4px">＋ 添加自定义设备</button>
+            <button id="addCustomItem" class="ghost" style="width:100%;margin-top:4px">添加自定义设备</button>
           </div>
         </div>
       </section>
@@ -384,7 +395,15 @@
           <div style="font-size:9pt;color:#555" id="printMeta"></div>
         </div>
 
-        <!-- 核心数字 -->
+        <!-- 推荐电源：全页最重要的结论，置于结果列最顶部 -->
+        <div class="reco">
+          <div class="reco-label">你要买的电源</div>
+          <div class="big" id="recoBig">— W</div>
+          <div class="sub" id="recoSub"></div>
+          <div class="meta" id="recoMeta"></div>
+        </div>
+
+        <!-- 辅助数字：规划 / 预期 / 瞬时峰值 -->
         <div class="hero">
           <div>
             <div class="k">规划功耗（峰值合计）</div>
@@ -403,17 +422,9 @@
           </div>
         </div>
 
-        <!-- 电源推荐 -->
-        <div class="reco">
-          <div class="k" style="font-size:11.5px;color:var(--text-mute)">推荐电源功率</div>
-          <div class="big" id="recoBig">— W</div>
-          <div class="sub" id="recoSub"></div>
-          <div class="meta" id="recoMeta"></div>
-        </div>
-
         <!-- 三档推荐 -->
         <section class="card">
-          <h2><span class="idx">★</span>电源推荐方案<span class="hint" id="psuPickHint"></span></h2>
+          <h2>电源推荐方案<span class="hint" id="psuPickHint"></span></h2>
           <div class="card-body">
             <div class="psu-picks" id="psuPicks"></div>
             <div id="psuPickNote" style="margin-top:11px"></div>
@@ -422,19 +433,19 @@
 
         <!-- 兼容性与风险 -->
         <section class="card">
-          <h2><span class="idx">!</span>兼容性与风险提示<span class="hint" id="issueCount"></span></h2>
+          <h2>兼容性与风险<span class="hint" id="issueCount"></span></h2>
           <div class="card-body" id="issues"></div>
         </section>
 
         <!-- 升级建议 -->
         <section class="card">
-          <h2><span class="idx">↑</span>未来升级空间</h2>
+          <h2>升级空间</h2>
           <div class="card-body" id="upgradeBox"></div>
         </section>
 
         <!-- 智能建议 -->
         <section class="card">
-          <h2><span class="idx">✨</span>配置平衡建议<span class="hint">规则引擎，非 AI 模型</span></h2>
+          <h2>配置平衡建议</h2>
           <div class="card-body">
             <div class="field">
               <label>整机预算 <span class="unit">(元，选填 → 用于电源占比分析)</span></label>
@@ -446,15 +457,16 @@
 
         <!-- 功耗明细 -->
         <section class="card">
-          <h2><span class="idx">≡</span>功耗明细<span class="hint">含来源与置信度标注</span></h2>
+          <h2>功耗明细<span class="hint">含来源与置信度</span></h2>
           <div class="card-body tight">
-            <table class="detail" id="detailTable"></table>
+            <!-- 窄屏必须能横向滚动，否则右侧的瓦数/来源列会被裁掉且无法触达 -->
+            <div class="table-scroll"><table class="detail" id="detailTable"></table></div>
           </div>
         </section>
 
         <!-- 导出 -->
         <section class="card">
-          <h2><span class="idx">⤓</span>导出报告</h2>
+          <h2>导出报告</h2>
           <div class="card-body">
             <div class="grid3">
               <button id="btnCsv" class="primary">导出 Excel (CSV)</button>
@@ -468,22 +480,16 @@
           </div>
         </section>
 
-        <!-- 数据来源 -->
-        <section class="card">
-          <h2><span class="idx">§</span>数据来源</h2>
-          <div class="card-body">
-            <ul class="src-list" id="sources"></ul>
-          </div>
-        </section>
-
       </div>
     </div>
   </div>
 
-  <!-- ================================================== 反馈入口 ====== -->
-  <section class="card" id="feedbackCard" style="margin-top:6px">
-    <h2><span class="idx">＋</span>提交新硬件 / 纠错<span class="hint">推动数据库迭代</span></h2>
-    <div class="card-body">
+  <!-- ============================== 反馈入口（默认收起，使用频率低）==== -->
+  <details class="section-collapse">
+    <summary>提交新硬件 / 纠错<span class="hint">可选 · 推动数据库迭代</span></summary>
+    <section class="card" id="feedbackCard">
+      <h2>提交新硬件 / 纠错</h2>
+      <div class="card-body">
       <div class="grid3">
         <div class="field">
           <label>类别</label>
@@ -524,12 +530,92 @@
         提交内容会保存在本机浏览器（localStorage）并生成 JSON，
         你可以复制后发给维护者，或直接编辑 <code>js/db.js</code> 自行扩充数据库。
       </div>
-    </div>
-  </section>
+      </div>
+    </section>
+  </details>
 
 </div>
 
+<!-- 移动端常驻结果条：抬头就能看到"该买多大"，由 js/ui.js 同步数值 -->
+<div class="mobile-bar" id="mobileBar" hidden>
+  <div class="mb-label">推荐电源<br>瓦数</div>
+  <div class="mb-value" id="mobileBarValue">—<span> W</span></div>
+</div>
+
 <div class="toast" id="toast"></div>
+
+<!-- ========================= 数据声明弹窗（打开页面时自动出现）==========
+     原「数据来源」卡片与显卡卡里的两段声明都搬到了这里，
+     所以 id="sources" 与 id="aibCatalogNote" 依然存在 —— app.js 不需要改。
+     顶栏的「数据声明」按钮可以随时重新打开。
+     ==================================================================== -->
+<div class="modal-backdrop" id="disclaimerModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true"
+       aria-labelledby="dmTitle" aria-describedby="dmBody">
+    <div class="modal-head">
+      <span class="mark" role="img" aria-label="ROG 玩家国度之眼"></span>
+      <span class="wordmark" role="img" aria-label="REPUBLIC OF GAMERS"></span>
+      <h2 id="dmTitle">使用前请阅读</h2>
+      <button type="button" class="modal-x" id="dmClose" aria-label="关闭声明">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-body" id="dmBody">
+      <section>
+        <h3>功耗数值都是估算值</h3>
+        <p>
+          本工具的所有功耗数值来自厂商规格页、权威评测与公开泄露信息，每一条都标注了
+          <span class="conf official">official</span>
+          <span class="conf review">review</span>
+          <span class="conf estimate">estimate</span>
+          <span class="conf leak">leak</span>
+          置信度与来源。电源选型的本质是估算，真实功耗取决于具体软件负载、BIOS 功耗墙
+          设置与环境温度。本结果适合用来排除「明显不够用」的电源，<b>不应替代厂商官方建议</b>。
+          标为 <span class="conf leak">leak</span> 的硬件尚未发布，仅可用于前瞻推演。
+        </p>
+      </section>
+
+      <section>
+        <h3>「显卡适配主板」是什么意思</h3>
+        <p>
+          同一颗 GPU 由不同 AIC 厂商做成不同的<b>板型 / PCB</b>（如 ROG Astral、SUPRIM、
+          AORUS MASTER），功耗墙与供电接口各不相同，所以第 3 步选的是<b>显卡板型</b>。
+          至于<b>系统主板</b>（如 Z890 / B850）与 CPU 的插槽兼容性，在第 4 步校验。
+        </p>
+      </section>
+
+      <section>
+        <h3>AIC 板型数据的可靠性</h3>
+        <div class="note warn" id="aibCatalogNote"></div>
+      </section>
+
+      <section>
+        <h3>纯血老卡与二手硬件的提醒</h3>
+        <p>
+          数据库同时收录了 GTX 900 / 10 系、RTX 20 / 30 系与 RX 500 / 5000 / 6000 系等
+          已停产的显卡，方便沿用旧机时估算。这些型号的厂商功耗墙多为<b>规则推算</b>而非
+          官方数据，且旧卡经过多年使用后<b>电容老化、硅脂干涸</b>会让实际功耗与峰值抖动变大，
+          建议比计算结果再留一档余量。已停产的硬件在市面上只能买到二手，请自行判断成色与保修。
+        </p>
+      </section>
+
+      <section>
+        <h3>数据来源</h3>
+        <ul class="src-list" id="sources"></ul>
+      </section>
+    </div>
+
+    <div class="modal-foot">
+      <label class="chk" for="dmNever">
+        <input type="checkbox" id="dmNever">
+        <span>不再提示</span>
+      </label>
+      <button type="button" class="primary" id="dmOk">我已了解，开始使用</button>
+    </div>
+  </div>
+</div>
 
 <!-- 加载顺序不可调换：db-cpus / db-aib 先注册数据，db.js 负责装配 -->
 <script src="js/db-cpus.js"></script>
@@ -537,5 +623,8 @@
 <script src="js/db.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/app.js"></script>
+<!-- 改版增强层：卡片折叠 / 步骤高亮 / 说明收纳 / 移动端结果条。
+     放在 app.js 之后，不修改任何 id，不参与计算。 -->
+<script src="js/ui.js"></script>
 </body>
 </html>

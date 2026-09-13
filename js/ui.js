@@ -1,0 +1,395 @@
+/* ============================================================================
+ *  ui.js —— 改版增强层
+ * ----------------------------------------------------------------------------
+ *  设计原则（与改版提示词包的硬性约束一致）：
+ *    · 不修改任何 id / name / data-* 属性 —— app.js 靠 getElementById 绑定
+ *    · 不参与任何计算 —— 只读取 app.js 渲染出来的 DOM 文本
+ *    · 不改动 engine.js / db*.js、不改动 app.js
+ *    · 全部效果都能在 @media print 里被压平（见 style.css 打印段）
+ *
+ *  它只做五件事：
+ *    1. 给左列 10 张卡注入折叠开关 + 已选摘要；默认全部收起，由用户自己展开
+ *    2. 用 IntersectionObserver 高亮当前正在看的卡片
+ *    3. 把配置列里冗长的 .note 说明收成两行 + ⓘ 展开（结果列的说明不动，
+ *       因为那是"答案的一部分"，折叠它反而有害）
+ *    4. 移动端底部常驻条，同步显示推荐瓦数
+ *    5. 数据声明弹窗（打开页面时自动出现，顶栏按钮可重开）
+ *
+ *  加载位置：app.js 之后（需要读取 app.js 渲染后的 DOM）。
+ * ==========================================================================*/
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ------------------------------------------------------------ 配置 --- */
+  var LS_KEY = 'psu-calc-2026-v1-ui';
+
+  /* 默认展开的卡片序号。空数组 = 打开页面时所有选项都收起来，
+     由用户自己点开需要填的那几步。
+     注意这里给的是「默认值」：用户手动展开过的那张卡会记在 localStorage 里，
+     下次打开保持用户自己的状态，不会又被强行收起。 */
+  var ALWAYS_OPEN = [];
+
+  // 折叠态摘要：按卡片序号读对应控件的当前值
+  var SUMMARY_RULES = {
+    1: function () {
+      var on = document.querySelector('.scenario.on b');
+      return on ? on.textContent.trim() : '未选择';
+    },
+    2: function () {
+      var head = optionHead($('cpuSelect'));
+      if (head) return head;
+      // 只选了品牌/世代还没选型号时，把当前筛选条件显示出来，
+      // 否则收起状态下用户看不出「我已经筛到 Intel 12 代」了
+      var b = $('cpuBrand') ? $('cpuBrand').querySelector('button.on') : null;
+      var bTxt = b ? b.textContent.trim() : '';
+      var g = $('cpuGen');
+      var gTxt = (g && g.value) ? (g.options[g.selectedIndex] || {}).textContent || '' : '';
+      gTxt = gTxt.split(' · ')[0].trim();
+      var parts = [bTxt, gTxt].filter(Boolean);
+      return parts.length ? parts.join(' / ') + ' · 未选型号' : '未选择';
+    },
+    3: function () {
+      var m = $('gpuModel');
+      if (!m) return '';
+      if (m.value === '__igpu__') return '集成显卡';
+      var aib = $('gpuAib');
+      if (aib && aib.value) return optionHead(aib) || '未指定板型';
+      var head = optionHead(m);
+      if (head) return head;
+      var b = $('gpuBrand') ? $('gpuBrand').querySelector('button.on') : null;
+      return b ? b.textContent.trim() + ' · 未选型号' : '未选择';
+    },
+    4: function () { return optionHead($('moboSelect')) || '未选择'; },
+    5: function () {
+      var head = optionHead($('ramSelect'));
+      if (!head) return '未选择';
+      var kits = $('ramKits') ? (parseInt($('ramKits').value, 10) || 1) : 1;
+      return head + ' ×' + kits + ' 套';
+    },
+    6: function () {
+      var rows = document.querySelectorAll('#storageList .storage-row');
+      if (!rows.length) return '未添加';
+      var n = 0;
+      Array.prototype.forEach.call(rows, function (r) {
+        var q = r.querySelector('.s-qty');
+        n += parseInt(q && q.value, 10) || 1;
+      });
+      return n + ' 块硬盘 / SSD';
+    },
+    7: function () {
+      var c = optionHead($('coolerSelect'));
+      var fans = $('fanQty') ? (parseInt($('fanQty').value, 10) || 0) : 0;
+      return (c ? c + ' · ' : '') + fans + ' 只机箱风扇';
+    },
+    8: function () { return optionHead($('caseSelect')) || '未选择'; },
+    9: function () {
+      var n = document.querySelectorAll('#extrasGrid input[type="checkbox"]:checked').length;
+      var c = document.querySelectorAll('#customItems .storage-row').length;
+      var ar = $('argbChannels') ? (parseInt($('argbChannels').value, 10) || 0) : 0;
+      var parts = [];
+      if (n) parts.push('扩展 ' + n + ' 项');
+      if (c) parts.push('自定义 ' + c + ' 项');
+      if (ar) parts.push('ARGB ' + ar + ' 路');
+      return parts.length ? parts.join(' · ') : '未添加';
+    },
+    10: function () {
+      var v = optionHead($('psuSelect'));
+      return v ? v : '暂不校验';
+    }
+  };
+
+  /* 从 select 的当前选中项取出「·」之前的主名称 */
+  function optionHead(sel) {
+    if (!sel || !sel.value) return '';
+    var op = sel.options[sel.selectedIndex];
+    if (!op) return '';
+    return (op.textContent || '').split('·')[0].trim();
+  }
+
+  /* -------------------------------------------------------- 折叠控制 --- */
+  var cards = [];              // { el, no, summaryEl, toggleEl }
+  var noteDone = new WeakSet(); // 已处理过的说明块，避免重复扫描
+
+  function readState() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; } catch (e) { return {}; }
+  }
+  function writeState(s) {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch (e) { /* 隐私模式忽略 */ }
+  }
+
+  function setupCards() {
+    var col = document.querySelector('.col-config');
+    if (!col) return;
+
+    var sections = col.querySelectorAll('section.card');
+    var state = readState();
+    var no = 0;   // 显式计数，不依赖 DOM 索引（guideCard 不参与编号）
+
+    Array.prototype.forEach.call(sections, function (sec) {
+      if (sec.id === 'guideCard') return;   // 引导卡有自己的关闭按钮
+      no++;
+
+      var h2 = sec.querySelector('h2');
+      if (!h2) return;
+
+      var sum = document.createElement('span');
+      sum.className = 'card-summary';
+      h2.appendChild(sum);
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'card-toggle';
+      btn.setAttribute('aria-label', '折叠 / 展开');
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleCard(sec, btn);
+      });
+      h2.appendChild(btn);
+
+      // 点标题栏任意位置也能折叠，更符合直觉
+      h2.addEventListener('click', function (e) {
+        if (e.target.closest('button') || e.target.closest('a')) return;
+        toggleCard(sec, btn);
+      });
+
+      var rec = { el: sec, no: no, summaryEl: sum, toggleEl: btn };
+      cards.push(rec);
+
+      // 初始状态：优先用记忆值，否则按 ALWAYS_OPEN 决定（现在是全部收起）
+      var remembered = state['c' + no];
+      var open = (remembered === undefined) ? (ALWAYS_OPEN.indexOf(no) !== -1) : !!remembered;
+      setCollapsed(sec, btn, !open);
+    });
+
+    refreshSummaries();
+  }
+
+  function setCollapsed(sec, btn, collapsed) {
+    sec.classList.toggle('is-collapsed', collapsed);
+    if (btn) btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+  }
+
+  function toggleCard(sec, btn) {
+    var collapsed = !sec.classList.contains('is-collapsed');
+    setCollapsed(sec, btn, collapsed);
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i].el === sec) {
+        var s = readState();
+        s['c' + cards[i].no] = collapsed ? 0 : 1;
+        writeState(s);
+        break;
+      }
+    }
+  }
+
+  /* -------------------------------------------------------- 摘要刷新 --- */
+  function refreshSummaries() {
+    cards.forEach(function (c) {
+      var rule = SUMMARY_RULES[c.no];
+      if (!rule) return;
+      var txt = '';
+      try { txt = rule() || ''; } catch (e) { txt = ''; }
+      // 只在内容真的变了时才写 DOM，避免触发 MutationObserver 死循环
+      if (c.summaryEl.textContent !== txt) c.summaryEl.textContent = txt;
+    });
+  }
+
+  /* ------------------------------------------------------ 视口高亮 ---- */
+  function setupActiveHighlight() {
+    if (!('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          cards.forEach(function (c) { c.el.classList.remove('is-active'); });
+          en.target.classList.add('is-active');
+        }
+      });
+    }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+    cards.forEach(function (c) { io.observe(c.el); });
+  }
+
+  /* ------------------------------------------------------ 说明收纳 ---- */
+  /* 只处理「配置列」里的说明块。
+     结果列里的 .note 是结论的一部分（如升级建议、方案说明），折叠它反而有害。 */
+  function collapseNotes() {
+    var col = document.querySelector('.col-config');
+    if (!col) return;
+    var notes = col.querySelectorAll('.note');
+    Array.prototype.forEach.call(notes, function (n) {
+      if (noteDone.has(n)) return;
+      if (n.closest('.glossary') || n.closest('.banner')) { noteDone.add(n); return; }
+      // 只有真正长的纯文字说明才收纳；含表格/列表的保持完整
+      var len = (n.textContent || '').trim().length;
+      if (len < 90 || n.querySelector('dl, table, ul, ol')) { noteDone.add(n); return; }
+      noteDone.add(n);
+      n.classList.add('note-collapsible');
+      n.addEventListener('click', function () { n.classList.toggle('open'); });
+    });
+  }
+
+  /* -------------------------------------------------- 移动端结果条 ---- */
+  /* 数值统一取自顶栏答案筹码（app.js 维护）。
+     两者同源，避免各自解析导致不一致；筹码隐藏即空态，底栏也不显示。 */
+  function escHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function setupMobileBar() {
+    var bar = $('mobileBar');
+    var out = $('mobileBarValue');
+    var chip = $('answerChip');
+    var src = $('answerChipValue') || $('recoBig');
+    if (!bar || !out || !src) return;
+
+    function sync() {
+      if (chip && chip.hidden) { bar.hidden = true; return; }
+      var t = (src.textContent || '').replace(/\s+/g, ' ').trim();
+      // 保留数字、区间连接符（- – ~ ～）、小数点与 W
+      var clean = t.replace(/[^\d\-–~～.W\s]/g, '').trim();
+      if (!/\d/.test(clean)) { bar.hidden = true; return; }
+      var html = escHtml(clean) + (/W/.test(clean) ? '' : '<span> W</span>');
+      if (out.innerHTML !== html) out.innerHTML = html;
+      if (bar.hidden) bar.hidden = false;
+    }
+
+    if ('MutationObserver' in window) {
+      new MutationObserver(sync).observe(src, {
+        childList: true, characterData: true, subtree: true
+      });
+      if (chip) {
+        new MutationObserver(sync).observe(chip, {
+          attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true
+        });
+      }
+    }
+    sync();
+  }
+
+  /* -------------------------------------------------------- 数据声明 ----
+     打开页面时自动出现的声明弹窗。原来的「数据来源」卡片与显卡卡里的两段
+     声明都搬进了这里，所以 id="sources" / id="aibCatalogNote" 都还在原位
+     （只是换了父节点），app.js 一行都不用改。
+
+     抑制规则（两者之一成立就不弹）：
+       · URL 带 ?nodisclaimer=1 —— 给截图 / OG 图 / 回归测试用，
+         否则弹窗会盖住整页，基线比对和预览图全废
+       · localStorage 里记住了同一个数据版本 —— 用户勾了「不再提示」。
+         按「数据版本」而不是布尔值记，是为了数据库升版后能再提示一次。 */
+  var DM_KEY = 'psu-calc-2026-v1-disclaimer';
+
+  function setupDisclaimer() {
+    var m = $('disclaimerModal');
+    var openBtn = $('btnDisclaimer');
+    if (!m || !openBtn) return;
+
+    var body = $('dmBody');
+    var okBtn = $('dmOk');
+    var xBtn = $('dmClose');
+    var never = $('dmNever');
+    var lastFocus = null;
+
+    function dbVersion() {
+      var d = window.HWDB;
+      return (d && d.meta && d.meta.version) || '1';
+    }
+    function suppressed() {
+      if (/[?&]nodisclaimer=1(&|$)/.test(location.search)) return true;
+      if (location.hash === '#nodisclaimer') return true;
+      try { return localStorage.getItem(DM_KEY) === dbVersion(); } catch (e) { return false; }
+    }
+
+    function isOpen() { return !m.hidden; }
+
+    function open() {
+      if (isOpen()) return;
+      lastFocus = document.activeElement;
+      m.hidden = false;
+      document.body.classList.add('modal-open');
+      if (body) body.scrollTop = 0;
+      if (okBtn) { try { okBtn.focus({ preventScroll: true }); } catch (e) { okBtn.focus(); } }
+    }
+
+    function close() {
+      if (!isOpen()) return;
+      // 勾了「不再提示」才记；没勾就下次打开还提示 —— 声明不能被动消失
+      if (never && never.checked) {
+        try { localStorage.setItem(DM_KEY, dbVersion()); } catch (e) {}
+      }
+      m.hidden = true;
+      document.body.classList.remove('modal-open');
+      if (lastFocus && lastFocus.focus) {
+        try { lastFocus.focus({ preventScroll: true }); } catch (e) {}
+      }
+      lastFocus = null;
+    }
+
+    openBtn.addEventListener('click', open);
+    if (okBtn) okBtn.addEventListener('click', close);
+    if (xBtn) xBtn.addEventListener('click', close);
+
+    // 点遮罩（卡片之外）关闭
+    m.addEventListener('mousedown', function (e) {
+      if (e.target === m) close();
+    });
+
+    // Esc 关闭 + 焦点锁在弹窗内（Tab 不跑到背后的配置表单上）
+    m.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' || e.key === 'Esc') { close(); return; }
+      if (e.key !== 'Tab') return;
+      var f = m.querySelectorAll('button, input, [href], select, textarea, [tabindex]:not([tabindex="-1"])');
+      var list = Array.prototype.filter.call(f, function (el) {
+        return !el.disabled && el.offsetParent !== null;
+      });
+      if (!list.length) return;
+      var first = list[0], last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+
+    if (!suppressed()) open();
+
+    // 供自动化测试 / 其他脚本调用
+    window.__PSU_DISCLAIMER__ = { open: open, close: close, isOpen: isOpen };
+  }
+
+  /* ------------------------------------------------------------ 启动 --- */
+  function boot() {
+    try {
+      setupCards();
+      setupActiveHighlight();
+      collapseNotes();
+      setupMobileBar();
+      setupDisclaimer();
+
+      // 控件值变化 → 刷新摘要
+      // 用捕获阶段监听，不影响 app.js 自己的监听器
+      ['change', 'input'].forEach(function (ev) {
+        document.addEventListener(ev, refreshSummaries, true);
+      });
+
+      // 动态增删的存储行 / 自定义设备行不会触发 change，需要观察 DOM。
+      // refreshSummaries 内部有"内容没变就不写"的判断，不会自激。
+      var col = document.querySelector('.col-config');
+      if (col && 'MutationObserver' in window) {
+        new MutationObserver(function () {
+          refreshSummaries();
+          collapseNotes();
+        }).observe(col, { childList: true, subtree: true });
+      }
+    } catch (e) {
+      // ui.js 是增强层，任何异常都不能影响主计算功能
+      console.error('[ui.js]', e);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
