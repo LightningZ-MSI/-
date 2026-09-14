@@ -51,6 +51,12 @@
    *          用它可以精确到"该系列只做这几个型号"，比 minTbp/maxTbp 区间更可靠。
    *          例：华擎 Taichi 经官网核实只做 RX 9070 XT 与 RX 7900 XTX，
    *          用区间无法表达（会误伤中间的 9070），必须用 onlyGpus。
+   *  gens / exceptGpus / brands 的**核实结果统一写在文件下方的 COVERAGE 表里**，
+   *          不散落在每条系列定义中 —— 这样「哪些系列已逐代核实」一眼可查。
+   *          gens       世代白名单（GPU 世代 id 数组，如 ['rtx50','rx7000']）
+   *          exceptGpus 在该白名单里再排掉个别型号（同一代里只做部分 SKU 时用）
+   *          已核实的例子：ASUS 在 RX 7000 / RX 9000 上都没有 ROG Strix；
+   *          ROG Strix 在 RTX 50 世代只做 5070 Ti / 5070，5090/5080 走 Astral 与 TUF。
    *  liquid  是否为水冷/液冷形态（影响机箱冷排校验）
    * ======================================================================*/
   var SERIES = [
@@ -285,7 +291,8 @@
       brands: ['NVIDIA'], tier: 'value', minTbp: 0,
       powerMult: 1.00, ocMult: 1.00, bias: 'conservative', length: 280, slots: 2.5 },
 
-    /* --------------------------------------------------------- AMD 阵营 -- */
+    /* --------------------------------------------------------- AMD 阵营 --
+       ⚠️ 覆盖范围的核实结果见下方 COVERAGE 表。这里是系列本身的定位与功耗模型。 */
     { id: 'powercolor-liquid-devil', vendor: '撼讯 PowerColor', series: 'Liquid Devil', cn: '水魔',
       brands: ['AMD'], tier: 'halo', minTbp: 280, since: 2019, liquid: true, radiator: 360,
       powerMult: 1.12, ocMult: 1.08, bias: 'aggressive', length: 280, slots: 2.0 },
@@ -296,12 +303,16 @@
     { id: 'powercolor-hellhound', vendor: '撼讯 PowerColor', series: 'Hellhound', cn: '暗黑犬',
       brands: ['AMD'], tier: 'mainstream', minTbp: 0,
       powerMult: 1.05, ocMult: 1.06, bias: 'moderate', length: 322, slots: 3.0 },
+    { id: 'powercolor-reaper', vendor: '撼讯 PowerColor', series: 'Reaper', cn: '死神',
+      brands: ['AMD'], tier: 'value', minTbp: 0,
+      powerMult: 1.00, ocMult: 1.04, bias: 'conservative', length: 300, slots: 2.5,
+      note: '撼讯在 RX 9000 世代的入门款（替代以往的 Fighter），已核实覆盖 RX 9070 XT。' },
     { id: 'powercolor-fighter', vendor: '撼讯 PowerColor', series: 'Fighter', cn: '战将',
       brands: ['AMD'], tier: 'value', minTbp: 0,
       powerMult: 1.00, ocMult: 1.03, bias: 'conservative', length: 270, slots: 2.0 },
 
     { id: 'sapphire-toxic', vendor: '蓝宝石 SAPPHIRE', series: 'TOXIC', cn: '毒药',
-      brands: ['AMD'], tier: 'halo', minTbp: 280, liquid: true, radiator: 360,
+      brands: ['AMD'], tier: 'halo', minTbp: 280, since: 2019, liquid: true, radiator: 360,
       powerMult: 1.13, ocMult: 1.05, bias: 'aggressive', length: 280, slots: 2.0 },
     { id: 'sapphire-nitro-plus', vendor: '蓝宝石 SAPPHIRE', series: 'NITRO+', cn: '超白金',
       brands: ['AMD'], tier: 'flagship', minTbp: 180,
@@ -383,6 +394,125 @@
       brands: ['Intel'], tier: 'flagship', minTbp: 150,
       powerMult: 1.05, ocMult: 1.10, bias: 'aggressive', length: 300, slots: 2.5 }
   ];
+
+  /* ============================================ 覆盖范围核实表 ============
+   *  为什么需要这张表：
+   *    规则生成器按「品牌 + TBP 区间」把系列组合到 GPU 上，于是会造出厂商
+   *    **根本没发表过的型号**。实测到的例子：
+   *      · 「华硕 ROG Strix RX 9070 XT」—— 不存在。ASUS 官网筛选
+   *        ROG Strix + AMD 返回 0 项；RX 7000 与 RX 9000 都只有 TUF Gaming
+   *        （RX 9000 另有 Prime）。依据 ASUS 官方新闻稿 2025-02-28。
+   *      · 「技嘉 AORUS MASTER RX 9070 XT」—— 不存在。技嘉 RX 9070 XT 只有
+   *        GAMING / GAMING OC / GAMING OC ICE / AORUS ELITE 四款。
+   *      · 「华硕 ROG Strix RTX 5090」—— 不存在。5090 走 ROG Astral 与 TUF，
+   *        5060 / 5060 Ti 只到 TUF / Prime / Dual。
+   *
+   *  表里的每一项都是**逐代核实过**的覆盖范围。没进这张表的系列表示
+   *  尚未逐代核实，界面会把它们标成「按系列推算」而不是当作事实。
+   *
+   *  gens       世代白名单；不在名单里的世代一律不生成
+   *  exceptGpus 同一世代里再排掉个别型号（厂商只做了其中一部分 SKU 时用）
+   *  brands     纠正系列定义里的品牌范围
+   * ======================================================================*/
+  var COVERAGE = {
+    /* ---------------------------------------------------------- 华硕 ASUS -- */
+    /* Astral 只做 5090 与 5080（含对应的 50 SUPER）；5070 Ti / 5070 是 ROG Strix。
+       minTbp:250 放行了 5070 Ti / 5070，所以必须在这里排掉。 */
+    'asus-rog-astral': {
+      gens: ['rtx50', 'rtx50super'],
+      exceptGpus: ['rtx5070ti', 'rtx5070', 'rtx5070tisuper', 'rtx5070super']
+    },
+    /* Matrix 是 5090 独占的液冷 Halo（minTbp:500 已经卡住，这里显式记一笔） */
+    'asus-rog-matrix': { gens: ['rtx50'] },
+    'asus-rog-strix': {
+      brands: ['NVIDIA', 'AMD'],
+      gens: ['rtx50', 'rtx40', 'rtx30', 'rtx20', 'gtx16', 'gtx10', 'gtx900',
+             'rx6000', 'rx5000', 'rx500'],
+      /* RTX 50 世代里 Strix 只做 5070 Ti / 5070：
+         5090 / 5080 是 Astral 与 TUF，5060 / 5060 Ti 只到 TUF / Prime / Dual。 */
+      exceptGpus: ['rtx5090', 'rtx5080', 'rtx5060ti', 'rtx5060']
+    },
+    'asus-tuf': {
+      gens: ['rtx50', 'rtx40', 'rtx30', 'rtx20', 'gtx16',
+             'rx9000', 'rx7000', 'rx6000', 'rx5000']
+    },
+    'asus-prime': {
+      /* 5080 有 Prime，5090 没有（5090 走 Astral / TUF / ProArt）。 */
+      gens: ['rtx50', 'rtx40', 'rx9000', 'rx7000'],
+      exceptGpus: ['rtx5090']
+    },
+    'asus-dual': {
+      /* RX 9000 上 Dual 只做 9060 XT；9070 XT / 9070 仅 TUF 与 Prime。
+         NVIDIA 侧 Dual 是入门款，够不到 5090 / 5080 / 5070 Ti。 */
+      gens: ['rtx50', 'rtx40', 'rtx30', 'rtx20', 'gtx16', 'gtx10', 'gtx900',
+             'rx9000', 'rx7000', 'rx6000', 'rx5000', 'rx500'],
+      exceptGpus: ['rx9070xt', 'rx9070', 'rtx5090', 'rtx5080', 'rtx5070ti']
+    },
+    /* ProArt 是创作者线，只做 xx90 / xx80 档；5070 Ti / 5070 与 5060 系列都没有。 */
+    'asus-proart': {
+      gens: ['rtx50', 'rtx40', 'rtx30'],
+      exceptGpus: ['rtx5070ti', 'rtx5070', 'rtx5060ti', 'rtx5060']
+    },
+    /* Turbo 是涡轮散热的工作站向系列，RTX 50 世代整代没做。 */
+    'asus-turbo': { gens: ['rtx40', 'rtx30', 'rtx20', 'gtx16', 'gtx10'] },
+
+    /* ------------------------------------------------------ 技嘉 GIGABYTE -- */
+    'gigabyte-aorus-master': {
+      /* AORUS MASTER 没有任何 AMD 卡：RX 7900 XTX 与 RX 9070 XT 都只到 AORUS ELITE。
+         另外 RTX 50 世代里 5060 Ti / 5060 也只到 AORUS ELITE。 */
+      brands: ['NVIDIA'],
+      gens: ['rtx50', 'rtx40', 'rtx30', 'rtx20'],
+      exceptGpus: ['rtx5060ti', 'rtx5060']
+    },
+    'gigabyte-aorus-elite': {
+      /* ELITE 不是「只做顶级」的系列：RTX 5060 / 5060 Ti 与 RX 9070 XT 都有它。
+         但 RTX 50 世代里 5090 / 5080 与 5070 Ti / 5070 都轮不到它，
+         那几档是 AORUS MASTER / XTREME 与 GAMING OC / EAGLE。 */
+      gens: ['rtx50', 'rtx40', 'rtx30', 'rx9000', 'rx7000'],
+      exceptGpus: ['rtx5090', 'rtx5080', 'rtx5070ti', 'rtx5070']
+    },
+    'gigabyte-aorus-xtreme': { gens: ['rtx50', 'rtx40', 'rtx30'] },
+    'gigabyte-gaming-oc': {
+      gens: ['rtx50', 'rtx40', 'rtx30', 'rtx20', 'gtx16', 'rx9000', 'rx7000', 'rx6000']
+    },
+    /* EAGLE 是中端，5090 / 5080 上没有。 */
+    'gigabyte-eagle': {
+      gens: ['rtx50', 'rtx40', 'rtx30', 'rtx20', 'gtx16', 'rx7000', 'rx6000'],
+      exceptGpus: ['rtx5090', 'rtx5080']
+    },
+    'gigabyte-windforce': {
+      gens: ['rtx50', 'rtx40', 'rtx30', 'rtx20', 'gtx16', 'gtx10', 'gtx900',
+             'rx7000', 'rx6000', 'rx5000']
+    },
+    /* AERO 是创作者线，5090 上没有。 */
+    'gigabyte-aero': { gens: ['rtx50', 'rtx40', 'rtx30'], exceptGpus: ['rtx5090'] },
+
+    /* --------------------------------------------------- 撼讯 PowerColor -- */
+    'powercolor-red-devil': { gens: ['rx9000', 'rx7000', 'rx6000', 'rx5000'] },
+    'powercolor-hellhound': { gens: ['rx9000', 'rx7000', 'rx6000'] },
+    'powercolor-reaper': { gens: ['rx9000'] },
+    'powercolor-liquid-devil': { gens: ['rx7000', 'rx6000', 'rx5000'] },
+    'powercolor-fighter': { gens: ['rx7000', 'rx6000', 'rx5000', 'rx500'] },
+
+    /* --------------------------------------------------- 蓝宝石 SAPPHIRE -- */
+    'sapphire-toxic': { gens: ['rx6000', 'rx5000'] },
+    'sapphire-nitro-plus': { gens: ['rx9000', 'rx7000', 'rx6000', 'rx5000'] },
+    'sapphire-pulse': { gens: ['rx9000', 'rx7000', 'rx6000', 'rx5000', 'rx500'] },
+    'sapphire-pure': { gens: ['rx9000', 'rx7000', 'rx6000'] },
+
+    /* --------------------------------------------------- 瀚铠 VASTARMOR -- */
+    'vastarmor-alloy': { gens: ['rx9000', 'rx7000', 'rx6000'] },
+    'vastarmor-alloy-pro': { gens: ['rx9000', 'rx7000', 'rx6000'] }
+  };
+
+  SERIES.forEach(function (s) {
+    var c = COVERAGE[s.id];
+    if (!c) return;
+    if (c.gens) s.gens = c.gens;
+    if (c.exceptGpus) s.exceptGpus = c.exceptGpus;
+    if (c.brands) s.brands = c.brands;
+    s.coverageVerified = true;
+  });
 
   /* ================================================ 中文名核实状态 ========
    *  这是最容易出错、也最容易被当成"官方"传播的信息，因此单独建模：
@@ -623,6 +753,14 @@
            没有这条，2025 年才出现的 ROG Astral / 闪电 会被生成到 GTX 970 上，
            产出一堆现实中根本不存在的型号。 */
         if (s.since && g.year && g.year < s.since) return;
+        /* 世代白名单：厂商根本没做这一代。
+           例如华硕在 RDNA4（RX 9000）上只出 TUF Gaming 与 Prime，
+           并没有 ROG Strix / Dual —— 实测「ASUS ROG Strix RX 9070 XT」
+           这个型号根本不存在（依据 ASUS 官方新闻稿）。
+           since 只能挡住「系列还没诞生」的年代，挡不住「这一代没做」，
+           而 TBP 区间又会把 9070 XT 和 9070 一起误伤，所以需要按世代精确声明。 */
+        if (s.gens && s.gens.indexOf(g.gen) === -1) return;
+        if (s.exceptGpus && s.exceptGpus.indexOf(g.id) !== -1) return;
         if (g.tbp < (s.minTbp || 0)) return;
         if (s.maxTbp != null && g.tbp > s.maxTbp) return;
 
@@ -660,6 +798,11 @@
           liquid: isLiquid,
           radiator: s.radiator || (isLiquid ? 360 : 0),
           generated: true,
+          /* 这个型号本身是否经过核实存在。
+             coverageVerified 表示「该系列在这一代确实做这个型号」已逐代查证
+             （见 COVERAGE 表）；没有这个标记的只是按系列定位推算出来的组合，
+             界面必须把它与已核实的型号区分开，不能当成事实展示。 */
+          coverageVerified: !!s.coverageVerified,
           confidence: 'estimate',
           source: null,                 // 功耗墙是推算值，绝不伪造数据来源
           seriesSource: s.source || null, // 系列名称本身的来源（若有）
@@ -709,17 +852,22 @@
      *    ✅ 耕升中国区系列名：炫光 / 踏雪 / 追风（超能网报道），
      *       早期误写为全球市场的 Phantom/Ghost/Python，已修正
      *    ❌ 七彩虹 Kudan（九段）：未发现 RTX 50 系产品，已从目录移除
-     *    ⚠️ 其余 20+ 家厂商的系列中英文名与覆盖型号：未逐条核实
+     *    ✅ 华硕 / 技嘉 / 撼讯 / 蓝宝石 / 华擎 / 瀚铠 的**世代级覆盖范围**已核实
+     *       （见 COVERAGE 表）：原先会生成「华硕 ROG Strix RX 9070 XT」这类
+     *       厂商根本没发表的型号，现已按官方新闻稿与产品页逐代收紧
+     *    ⚠️ 其余厂商（尤其中国区品牌）的系列名与覆盖型号：未逐条核实
      * ------------------------------------------------------------------- */
     catalogMeta: {
       explicitCount: EXPLICIT.length,
       seriesCount: SERIES.length,
+      coverageVerifiedCount: SERIES.filter(function (s) { return s.coverageVerified; }).length,
       cnOfficialCount: SERIES.filter(function (s) { return s.cnType === 'official'; }).length,
       cnColloquialCount: SERIES.filter(function (s) { return s.cnType === 'colloquial'; }).length,
       cnUnverifiedCount: SERIES.filter(function (s) { return s.cnType === 'unverified'; }).length,
       verified: [
         '微星 Lightning Z（闪电）5090 —— 官方新闻稿：双 12V-2x6、最高 1000W、全球限量 1300 张',
         '华擎 ASRock 全部系列的覆盖型号 —— 逐条核对 asrock.com 官网型号表（见 docs/asrock-gpu-models.txt）',
+        '华硕 / 技嘉 / 撼讯 / 蓝宝石 / 瀚铠 的世代级覆盖范围 —— 依据厂商官方新闻稿与产品页（见 COVERAGE 表）',
         '华硕官方中文名：ROG Astral=夜神 / ROG STRIX=猛禽 / TUF=电竞特工 / PRIME=大师 / ProArt=创艺国度',
         '微星官方中文名：闪电 / 超龙 / 魔龙 / 万图师 / 神龙 / 幻影师 / 硬派师',
         '耕升中国区命名：炫光 / 踏雪 / 追风'
@@ -727,6 +875,13 @@
       corrected: [
         '微星闪电 5090 规格（原 700W/OC 800W/风冷/建议 1200W → 800W/极致 1000W/360 水冷/建议 1600W）',
         '华硕 ROG Astral 中文名（原「星曜」→ 官方「夜神」）',
+        /* ---- 覆盖范围核实：删掉厂商根本没做的组合 ---- */
+        '华硕 ROG Strix 的 AMD 覆盖（原包含 RX 7000 / RX 9000 → 官方筛选 0 项，已移除）',
+        '华硕 RX 9000 系列（原含 ROG Strix / Dual → 9070 XT / 9070 仅 TUF Gaming 与 Prime）',
+        '华硕 ROG Astral 覆盖（原含 5070 Ti / 5070 → 只做 5090 / 5080 及其 SUPER）',
+        '技嘉 AORUS MASTER 的 AMD 覆盖（原含 RX 7000 / RX 9000 → AORUS MASTER 无任何 AMD 卡）',
+        '技嘉 RX 9070 XT 型号（原含 AORUS MASTER / EAGLE / WINDFORCE → 仅 GAMING OC 与 AORUS ELITE）',
+        '撼讯 RX 9070 XT 型号（原含 Liquid Devil / Fighter → 实际是 Red Devil / Hellhound / Reaper，已补 Reaper 系列）',
         '微星 INSPIRE 中文名（原「硬派」→ 官方「硬派师」）',
         '华硕 DUAL / TURBO 中文名（原「雪豹」/「涡轮」→ 官方无中文名，已清空）',
         '技嘉中文名（原当作官方名 → 实为玩家俗称，已标注）',

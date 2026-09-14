@@ -485,7 +485,10 @@
    * ----------------------------------------------------------------------*/
   var GEN_MAP = {
     'GeForce RTX 50 (Blackwell)':        { id: 'rtx50', label: 'RTX 50 系', year: 2025, segment: 'current' },
-    'GeForce RTX 50 SUPER (未发布)':      { id: 'rtx50', label: 'RTX 50 系', year: 2026, segment: 'unreleased' },
+    /* 未发布的 50 SUPER 单独给一个世代 id，而不是并进 rtx50。
+       并进去的话它会混在在售型号里，用户根本分不出来哪些能买；
+       单独一个世代之后，世代下拉会把它归进「未发布 / 前瞻」那一组排在最后。 */
+    'GeForce RTX 50 SUPER (未发布)':      { id: 'rtx50super', label: 'RTX 50 SUPER（未发布）', year: 2026, segment: 'unreleased' },
     'GeForce RTX 40 (Ada)':              { id: 'rtx40', label: 'RTX 40 系', year: 2022, segment: 'current' },
     'GeForce RTX 30 (Ampere)':           { id: 'rtx30', label: 'RTX 30 系', year: 2020, segment: 'legacy' },
     'GeForce RTX 20 (Turing)':           { id: 'rtx20', label: 'RTX 20 系', year: 2018, segment: 'legacy' },
@@ -509,11 +512,12 @@
     g.segment = m.segment;
   });
 
-  /* GPU 世代的展示顺序：新品在前，老卡在后 */
+  /* GPU 世代的展示顺序：新品在前，老卡居中，未发布殿后 */
   var GPU_GEN_ORDER = [
     'rtx50', 'rtx40', 'rx9000', 'rx7000', 'arcb',
     'rtx30', 'rtx20', 'gtx16', 'gtx10', 'gtx900',
-    'rx6000', 'rx5000', 'rx500', 'arca'
+    'rx6000', 'rx5000', 'rx500', 'arca',
+    'rtx50super'
   ];
   var GPU_GEN_META = {};
   GPUS.forEach(function (g) {

@@ -108,7 +108,7 @@ body {
 }
 
 a { color: var(--text-2); text-decoration: none; border-bottom: 1px solid var(--line); }
-a:hover { color: var(--text); border-bottom-color: var(--rog); }
+a:hover { color: var(--text); border-bottom-color: var(--text-3); }
 
 :focus-visible { outline: 2px solid var(--rog); outline-offset: 2px; }
 
@@ -233,54 +233,113 @@ details.section-collapse > summary::before {
 }
 
 /* ------------------------------------------------------------- 分区 ----
-   分区靠「标题 + 极细下划线」组织，不给每块都套完整矩形。 */
+   布局参考 MSI 电源计算器：**左侧窄栏放「图标 + 分组名」，右侧一大片放字段**。
+   这样十几组配置排下来是一列整齐的分组名，扫一眼就知道要填哪几项；
+   字段本身仍是「左标签 + 右控件」的数据行（这一条本来就是两家的共同做法）。
+
+   分区之间靠「极细上边线」分隔，不给每块都套完整矩形。
+
+   ⚠️ 这套三列栅格**只作用于配置列**（.col-config）。
+   结果列用的也是 <section class="card">，如果不加限定，
+   结果列会被一起塞进「176px | 1fr | 24px」三列里，内容被挤烂并横向溢出。
+   三列： 分组名栏 | 字段/摘要 | 折叠键                                       */
 .card {
   background: none; border: none;
   border-top: 1px solid var(--line);
   border-radius: 0; margin-bottom: 0; overflow: visible;
 }
-.card > h2 {
-  margin: 0; padding: 14px 0 10px;
-  font-size: var(--fs-h); font-weight: 700; color: var(--text);
-  letter-spacing: .01em; line-height: 1.3;
-  border-bottom: 1px solid var(--line-soft);
-  display: flex; align-items: center; gap: 0; background: none;
+.col-config .card {
+  display: grid;
+  grid-template-columns: minmax(0, 176px) minmax(0, 1fr) 24px;
+  column-gap: 18px;
+  align-items: start;
+  padding: 12px 0 13px;
 }
-.card-body { padding: 14px 0 20px; }
-.card-body.tight { padding: 10px 0 18px; }
+.card > h2 {
+  margin: 0; padding: 0;
+  font-size: var(--fs-h); font-weight: 700; color: var(--text);
+  letter-spacing: .01em; line-height: 1.35;
+  border-bottom: none;
+  background: none;
+  /* /// + 图标 + 分组名 排在同一行（对照 MSI 的 [icon] CPU）——
+     三者各占一行会把每个分区撑到近 60px 高，一屏看不到几组。 */
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0;
+}
+.col-config .card > h2 { grid-column: 1; grid-row: 1; }
+/* 分组图标（由 js/ui.js 注入） */
+.card > h2 .sec-ico {
+  display: inline-flex; margin: 0 9px 0 0;
+  color: var(--text-3);
+}
+.card > h2 .sec-ico svg { width: 19px; height: 19px; display: block; }
+.col-config .card-body { grid-column: 2; grid-row: 1; padding: 0; }
+.card-body.tight { padding: 0; }
 
 /* 序号：不再是亮色实底方块（它出现 19 次，是全页最吵的重复元素），改为小号灰字 */
 .card > h2 .idx {
   width: auto; height: auto; flex: 0 0 auto; display: inline;
   background: none; color: var(--text-4);
   font-family: var(--mono); font-size: var(--fs-sm); font-weight: 600;
-  margin-right: 8px; box-shadow: none !important;
+  margin-right: 6px; box-shadow: none !important;
 }
 .card > h2 .hint {
-  margin-left: auto; font-weight: 400; font-size: var(--fs-xs); color: var(--text-3);
+  display: block; flex: 1 1 100%; margin: 5px 0 0;
+  font-weight: 400; font-size: var(--fs-xs); color: var(--text-3); line-height: 1.55;
 }
+/* /// 标记与图标、分组名同一行 */
+.card > h2::before { display: inline-block; margin: 0 8px 0 0; vertical-align: -2px; }
 
-/* 已选摘要（折叠态显示，由 js/ui.js 注入） */
+/* 已选摘要（折叠态显示，由 js/ui.js 注入到**分区**上，与字段同栏） */
 .card-summary {
-  display: none; margin-left: auto; font-size: var(--fs-sm); color: var(--text-3);
-  font-weight: 400; max-width: 64%; overflow: hidden;
+  grid-column: 2; grid-row: 1;
+  display: none; font-size: var(--fs-sm); color: var(--text-2);
+  font-weight: 600; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap;
+  padding-top: 1px;
 }
 .card.is-collapsed > h2 .hint { display: none; }
-.card.is-collapsed > h2 .card-summary { display: block; }
-.card.is-collapsed > .card-body { display: none; }
+.card.is-collapsed > .card-summary { display: block; }
+
+/* 展开 / 收起的平滑高度过渡（只作用于配置列）。
+   display:none 是没法做过渡的，所以这里用 grid-template-rows 从 0fr 到 1fr ——
+   高度自然动画，且不需要事先知道内容有多高（由 js/ui.js 包的那层 .card-body-in 承载）。 */
+.col-config .card > .card-body {
+  display: grid; grid-template-rows: 1fr;
+  transition: grid-template-rows 240ms var(--ease), opacity 170ms var(--ease);
+}
+.col-config .card > .card-body > .card-body-in { min-height: 0; overflow: hidden; }
+.col-config .card.is-collapsed > .card-body {
+  grid-template-rows: 0fr; opacity: 0; pointer-events: none;
+}
 
 /* 折叠开关 */
 .card-toggle {
-  flex: 0 0 auto; width: 22px; height: 22px; padding: 0; margin-left: 10px;
+  grid-column: 3; grid-row: 1;
+  width: 24px; height: 24px; padding: 0; margin: 0;
   display: grid; place-items: center; cursor: pointer;
   background: none; border: 1px solid var(--line);
-  border-radius: var(--radius); color: var(--text-4);
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  border-radius: var(--radius); color: var(--text-3);
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+              background-color var(--dur) var(--ease);
 }
 .card-toggle:hover { border-color: var(--text-4); color: var(--text); }
 .card-toggle::before { content: '▾'; font-size: 10px; display: block; transition: transform var(--dur) var(--ease); }
 .card.is-collapsed .card-toggle::before { transform: rotate(-90deg); }
+/* 收起状态下整行可点，给一点悬停反馈 */
+.card.is-collapsed { cursor: pointer; }
+.card.is-collapsed:hover { background: var(--bg-soft); }
+.card.is-collapsed:hover > h2 { color: var(--text); }
+
+/* 引导卡不是配置分区，保持整幅布局（它有自己的关闭键，没有折叠键） */
+.card.guide {
+  display: block; padding: 14px 0 20px;
+}
+.card.guide > h2 {
+  padding: 0 0 10px; border-bottom: 1px solid var(--line-soft);
+  display: flex; align-items: center;
+}
+.card.guide > h2::before { display: inline-block; margin: 0 11px 0 0; }
+.card.guide > .card-body { padding: 14px 0 0; }
 
 /* 当前卡：只做「左侧红色指示条」，不做整块变色 */
 .col-config .card { border-left: 2px solid transparent; padding-left: 14px; }
@@ -316,6 +375,22 @@ button.primary:hover { background: var(--rog-dim); border-color: var(--rog-dim);
 button.ghost { background: none; }
 button:disabled { opacity: .4; cursor: not-allowed; }
 button .ico { display: inline-block; vertical-align: -2px; }
+
+/* ------------------------------------------------------- 主题切换按钮 ----
+   顶栏里唯一的「设置类」控件，需要一眼看出它是个可点的按钮，
+   所以给它**实描边 + 高亮文字**，而不是像其他 ghost 按钮那样淡到看不见。
+   图标用 ROG 红点亮，翻面时文字跟着说明「切到哪一边」。 */
+#btnTheme {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--text-4);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 6px 12px;
+}
+#btnTheme .ico { color: var(--rog); flex: 0 0 auto; }
+#btnTheme .theme-label { font-weight: 700; letter-spacing: .02em; }
+#btnTheme:hover { border-color: var(--rog); }
+#btnTheme:active { background: var(--bg-soft); }
 
 /* --------------------------------------------------- 设置行（表单）----
    奥创的输入控件是「左标签 + 右控件 + 行间细线」的 row 形态，
@@ -414,7 +489,7 @@ select option, select optgroup { background: var(--bg-soft); color: var(--text);
 
 .seg { display: flex; gap: 6px; flex-wrap: wrap; }
 .seg button { flex: 0 0 auto; min-width: 72px; position: relative; }
-.seg button.on { border-color: var(--rog); color: var(--rog); background: rgba(255, 0, 51, .06); }
+.seg button.on { border-color: var(--rog); color: var(--text); background: rgba(255, 0, 51, .06); }
 /* 选中态 = 极淡同色底 + 红色描边 + 底部斜切短条。
    对照奥创真实界面的标签页：选中项就是一层很浅的底 + 一根红色下边。
    ⚠️ 只加伪元素、不对 button 本身用 clip-path ——
@@ -431,13 +506,18 @@ select option, select optgroup { background: var(--bg-soft); color: var(--text);
    ⚠️ 中文绝不能进 .big —— mono 字体栈里没有中文字体，
       空态时会出现「中文雅黑 + 数字 Consolas」同段两种字形。 */
 .reco {
-  padding: 20px 0 22px;
-  border-bottom: 1px solid var(--line);
+  padding: 20px 22px 24px;
   position: relative;
+  /* 参考 MSI 的右栏：把「推荐多少瓦」放进一个独立的填充面板里，
+     数字才是这一列真正的落点，而不是浮在一片空白上。
+     ROG 的做法是在面板顶部压一根红条，而不是给整块铺红底。 */
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--rog);
 }
 .reco .reco-label {
   font-size: var(--fs-xs); color: var(--text-3);
-  letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px;
+  letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px;
 }
 .reco .big {
   font-family: var(--mono); font-variant-numeric: tabular-nums;
@@ -447,7 +527,7 @@ select option, select optgroup { background: var(--bg-soft); color: var(--text);
 }
 /* 数字左下方 4px 红色斜切条（奥创的红色指示条 + ROG 的切割语言） */
 .reco .big::after {
-  content: ''; position: absolute; left: 0; bottom: -8px;
+  content: ''; position: absolute; left: 0; bottom: -9px;
   width: 48px; height: 4px; background: var(--rog);
   clip-path: polygon(0 0, 100% 0, calc(100% - var(--cut)) 100%, 0 100%);
 }
@@ -492,7 +572,7 @@ select option, select optgroup { background: var(--bg-soft); color: var(--text);
   font-size: var(--fs-xs); padding: 2px 8px; border-radius: var(--radius);
   border: 1px solid var(--line); color: var(--text-3); background: none;
 }
-.tag.on { border-color: var(--rog); color: var(--rog); }
+.tag.on { border-color: var(--rog); color: var(--text); }
 .tag.blue, .tag.warn { border-color: var(--line); color: var(--text-3); }
 
 /* --------------------------------------------------------- 三档推荐 --- */
@@ -807,6 +887,22 @@ body.modal-open { overflow: hidden; }
   .logo .wordmark { display: none; }
   .logo-text { padding-left: 11px; }
 
+  /* 分区从「左栏分组名 + 右栏字段」改回上下堆叠：
+     152px 的分组名栏在 390px 屏上会把字段压到没法用。
+     图标与 /// 回到标题行内横排。 */
+  .col-config .card {
+    grid-template-columns: minmax(0, 1fr) 28px;
+    column-gap: 14px; row-gap: 9px;
+  }
+  .col-config .card > h2 { grid-column: 1; grid-row: 1; }
+  .card > h2::before { display: inline-block; margin: 0 9px 0 0; vertical-align: -2px; }
+  .card > h2 .sec-ico { display: inline-flex; margin: 0 8px 0 0; }
+  .card > h2 .sec-ico svg { width: 18px; height: 18px; }
+  .card > h2 .hint { display: none; }
+  .col-config .card > .card-summary { grid-column: 1 / 3; grid-row: 2; padding-top: 0; }
+  .col-config .card > .card-body { grid-column: 1 / 3; grid-row: 2; }
+  .col-config .card > .card-toggle { grid-column: 2; grid-row: 1; }
+
   /* 触控目标 ≥44px */
   button, .btn, select, input[type="text"], input[type="number"] { min-height: 44px; }
   .card-toggle { width: 32px; height: 32px; }
@@ -889,8 +985,14 @@ body.modal-open { overflow: hidden; }
   }
   .card > h2 .idx { color: #000; }
 
-  /* 折叠内容必须全部展开，否则 PDF 会缺内容 */
-  .card.is-collapsed > .card-body { display: block !important; }
+  /* 折叠内容必须全部展开，否则 PDF 会缺内容。
+     注意屏幕态的收起是靠 grid-template-rows 0fr 做的，不是 display:none，
+     所以这里要把行高和透明度都还原，光加 display:block 不够。 */
+  .card.is-collapsed > .card-body {
+    display: grid !important; grid-template-rows: 1fr !important;
+    opacity: 1 !important; pointer-events: auto !important;
+  }
+  .card > .card-body { transition: none !important; }
   .card.is-collapsed > h2 .card-summary { display: none !important; }
   .card.is-collapsed > h2 .hint { display: inline !important; }
   details, details > *, details > summary + * { display: block !important; }

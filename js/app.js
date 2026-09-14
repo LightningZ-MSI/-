@@ -107,10 +107,17 @@
       $('aibCatalogNote').innerHTML =
         '<b>关于 AIC 板型数据的可靠性</b>' +
         '<div style="margin-top:6px">本目录共 <b>' + cm.seriesCount + '</b> 个厂商系列、' +
-        '<b>' + DB.meta.counts.aib + '</b> 个板型组合。其中只有 <b>' + cm.explicitCount +
+        '<b>' + DB.meta.counts.aib + '</b> 个板型组合。其中 <b>' + cm.explicitCount +
         '</b> 个型号有官方规格或权威评测来源（标' +
         '<span class="conf official">官方</span><span class="conf review">评测</span>' +
-        '），其余均为<b>按系列定位规则推算</b>的功耗墙，并在下拉列表中标注「规则生成」。</div>' +
+        '）。</div>' +
+        '<div style="margin-top:6px"><b>覆盖范围核实：</b>已按厂商官方新闻稿与产品页，' +
+        '逐代核实了 <b>' + cm.coverageVerifiedCount + '</b> / ' + cm.seriesCount +
+        ' 个系列的覆盖型号 —— 即「这个系列在这一代到底做不做这个型号」。' +
+        '例如 ASUS 在 RX 7000 / RX 9000 上从来没有 ROG Strix（猛禽），' +
+        '所以库里不会出现「华硕 ROG Strix RX 9070 XT」。' +
+        '未核实覆盖范围的系列，其组合在下拉里标「推算」，表示按系列定位推出来的组合、' +
+        '不保证厂商真的发表过该型号；功耗墙也一律是推算值，非厂商实测。</div>' +
         '<div style="margin-top:6px"><b>中文名分三态：</b>' +
         '官方名 <b>' + cm.cnOfficialCount + '</b> 个（厂商中文站确认）· ' +
         '玩家俗称 <b>' + cm.cnColloquialCount + '</b> 个（已确认厂商不使用，标「俗称」）· ' +
@@ -452,9 +459,12 @@
       aSel.innerHTML = '<option value="">— 未指定（按公版 TBP ' +
         (curGpu ? curGpu.tbp : '?') + 'W 计算）—</option>' +
         optionsHtml(aibs, S.gpuAibId, function (a) {
+          /* 只在尾部标「推算」——该系列这一代确实做这个型号、已逐代核实的，不加字。
+             这样下拉里一眼能分辨：没标记的是查证过存在的产品，
+             带「推算」的只是按系列定位推出来的组合。 */
+          var tag = (a.generated && !a.coverageVerified) ? '  ·  推算' : '';
           return a.vendor + ' ' + a.series + cnLabel(a) +
-                 '  ·  ' + a.tbp + 'W' + (a.liquid ? '  ·  水冷' : '') +
-                 (a.generated ? '  ·  规则生成' : '');
+                 '  ·  ' + a.tbp + 'W' + (a.liquid ? '  ·  水冷' : '') + tag;
         }, function (a) {
           return (tierCn[a.tier] || a.tier) + ' — ' + a.vendor;
         });

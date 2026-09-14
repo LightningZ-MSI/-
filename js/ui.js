@@ -119,6 +119,40 @@
     try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch (e) { /* 隐私模式忽略 */ }
   }
 
+  /* 每个配置分区的图标（参考 MSI 电源计算器的「图标 + 分组名」左栏）。
+     内联 SVG、单色描边，颜色跟随 currentColor —— 与全站图标同一套做法。 */
+  var SEC_ICON = {
+    1: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+    2: '<rect x="7" y="7" width="10" height="10"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/>',
+    3: '<rect x="3" y="7" width="18" height="10" rx="1"/><circle cx="9" cy="12" r="2.4"/><path d="M16 10v4"/>',
+    4: '<rect x="4" y="4" width="16" height="16" rx="1"/><rect x="8" y="8" width="5" height="5"/><path d="M16 8h.01M16 12h.01M16 16h.01M8 16h5"/>',
+    5: '<path d="M3 8h18v8H3z"/><path d="M7 8v8M11 8v8M15 8v8"/>',
+    6: '<rect x="3" y="5" width="18" height="7" rx="1"/><rect x="3" y="14" width="18" height="5" rx="1"/><path d="M7 8.5h.01M7 16.5h.01"/>',
+    7: '<circle cx="12" cy="12" r="8"/><path d="M12 4v4M12 16v4M4 12h4M16 12h4"/>',
+    8: '<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h6M9 11h6M12 15v3"/>',
+    9: '<path d="M12 4v16M4 12h16"/><circle cx="12" cy="12" r="4"/>',
+    10: '<path d="M4 8h16v10H4z"/><path d="M8 8V5h8v3M8 13h8"/>'
+  };
+
+  function injectIcons() {
+    var col = document.querySelector('.col-config');
+    if (!col) return;
+    var no = 0;
+    Array.prototype.forEach.call(col.querySelectorAll('section.card'), function (sec) {
+      if (sec.id === 'guideCard') return;
+      no++;
+      var h2 = sec.querySelector('h2');
+      var path = SEC_ICON[no];
+      if (!h2 || !path || h2.querySelector('.sec-ico')) return;
+      var ico = document.createElement('span');
+      ico.className = 'sec-ico';
+      ico.setAttribute('aria-hidden', 'true');
+      ico.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
+      h2.insertBefore(ico, h2.firstChild);
+    });
+  }
+
   function setupCards() {
     var col = document.querySelector('.col-config');
     if (!col) return;
@@ -134,9 +168,25 @@
       var h2 = sec.querySelector('h2');
       if (!h2) return;
 
+      /* 把卡片内容包一层，好让「展开 / 收起」能有平滑的高度过渡。
+         display:none 是没法过渡的；用 grid-template-rows 从 0fr 到 1fr
+         可以让高度自然动画，且不需要事先知道内容有多高。
+         这一层只是包装，不动任何 id —— app.js 全程按 id 取元素，不受影响。 */
+      var body = sec.querySelector('.card-body');
+      if (body && !body.firstElementChild?.classList?.contains('card-body-in')) {
+        var inner = document.createElement('div');
+        inner.className = 'card-body-in';
+        while (body.firstChild) inner.appendChild(body.firstChild);
+        body.appendChild(inner);
+      }
+
+      /* 摘要与折叠键挂在**分区**上而不是 h2 上：
+         参考 MSI 的布局后，h2 变成左侧窄栏（图标 + 分组名），
+         右侧那一大片留给字段。摘要与折叠键属于「右侧那一列」，
+         放进窄栏会把分组名挤爆。 */
       var sum = document.createElement('span');
       sum.className = 'card-summary';
-      h2.appendChild(sum);
+      sec.appendChild(sum);
 
       var btn = document.createElement('button');
       btn.type = 'button';
@@ -147,11 +197,17 @@
         e.stopPropagation();
         toggleCard(sec, btn);
       });
-      h2.appendChild(btn);
+      sec.appendChild(btn);
 
       // 点标题栏任意位置也能折叠，更符合直觉
       h2.addEventListener('click', function (e) {
         if (e.target.closest('button') || e.target.closest('a')) return;
+        toggleCard(sec, btn);
+      });
+      // 收起状态下整行都可点，不用非得瞄准标题
+      sec.addEventListener('click', function (e) {
+        if (!sec.classList.contains('is-collapsed')) return;
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.card-body')) return;
         toggleCard(sec, btn);
       });
 
@@ -175,6 +231,16 @@
   function toggleCard(sec, btn) {
     var collapsed = !sec.classList.contains('is-collapsed');
     setCollapsed(sec, btn, collapsed);
+
+    /* 展开后如果标题已经被顶出视口上方，把它拉回来 ——
+       否则用户点了最后一张卡，内容在屏幕外长出来，看起来像「没反应」。 */
+    if (!collapsed) {
+      var r = sec.getBoundingClientRect();
+      if (r.top < 64) {
+        try { sec.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { sec.scrollIntoView(); }
+      }
+    }
+
     for (var i = 0; i < cards.length; i++) {
       if (cards[i].el === sec) {
         var s = readState();
@@ -360,6 +426,7 @@
   /* ------------------------------------------------------------ 启动 --- */
   function boot() {
     try {
+      injectIcons();
       setupCards();
       setupActiveHighlight();
       collapseNotes();
