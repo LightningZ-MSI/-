@@ -93,6 +93,8 @@
 
   function initMeta() {
     $('dbVersion').textContent = DB.meta.version;
+    var tv = $('toolVersion');
+    if (tv) tv.textContent = DB.meta.toolVersion;
     var d = $('dbDate');
     if (d) d.textContent = DB.meta.updated;
     var c = DB.meta.counts;
