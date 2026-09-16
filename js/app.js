@@ -635,11 +635,91 @@
     });
   }
 
-  function initPsu() {
+  /* ======================================================== 电源选择 ====
+     电源型号可先按「功率段 / 80PLUS 认证 / 规范」三组筛选，再在按功率分组的
+     下拉里挑选；每个选项直接带供电接口详情（12V-2x6 / PCIe 8pin / CPU 8pin / SATA）。
+     筛选只是浏览辅助，不影响推荐逻辑。 */
+  var psuF = { watt: '', eff: '', atx: '' };
+
+  function psuConnSummary(p) {
+    var parts = [];
+    if (p.conn12v2x6 > 0) parts.push('12V-2x6×' + p.conn12v2x6);
+    parts.push('8pin×' + p.pcie8pin);
+    parts.push('CPU8pin×' + p.eps8pin);
+    if (p.sata) parts.push('SATA×' + p.sata);
+    return parts.join(' / ');
+  }
+
+  function psuWattBand(w) {
+    if (w <= 650) return '≤650W';
+    if (w <= 850) return '750~850W';
+    if (w <= 1000) return '1000W';
+    if (w <= 1250) return '1200~1250W';
+    return '≥1300W';
+  }
+
+  function buildPsuFilters() {
+    var watts = [
+      { v: '', t: '全部' }, { v: 'le650', t: '≤650W' },
+      { v: '750-850', t: '750~850W' }, { v: '1000', t: '1000W' },
+      { v: '1200-1250', t: '1200~1250W' }, { v: 'ge1300', t: '≥1300W' }
+    ];
+    var effs = [
+      { v: '', t: '全部' }, { v: '钛金', t: '钛金' }, { v: '铂金', t: '铂金' },
+      { v: '金牌', t: '金牌' }, { v: '铜牌', t: '铜牌' }
+    ];
+    var atxs = [
+      { v: '', t: '全部' }, { v: 'ATX 3.1', t: 'ATX 3.1' }, { v: 'ATX 3.0', t: 'ATX 3.0' }
+    ];
+    function seg(el, list, key) {
+      if (!el) return;
+      el.innerHTML = list.map(function (o) {
+        return '<button type="button" data-v="' + esc(o.v) + '"' +
+          (psuF[key] === o.v ? ' class="on"' : '') + '>' + esc(o.t) + '</button>';
+      }).join('');
+      el.addEventListener('click', function (e) {
+        var b = e.target.closest('button');
+        if (!b || b.dataset.v === psuF[key]) return;
+        psuF[key] = b.dataset.v;
+        refreshPsu();
+      });
+    }
+    seg($('psuFilterWatt'), watts, 'watt');
+    seg($('psuFilterEff'), effs, 'eff');
+    seg($('psuFilterAtx'), atxs, 'atx');
+  }
+
+  function refreshPsu() {
+    var f = psuF;
+    var list = DB.psus.filter(function (p) {
+      var ok = true;
+      if (f.watt === 'le650') ok = ok && p.watts <= 650;
+      else if (f.watt === '750-850') ok = ok && p.watts >= 750 && p.watts <= 850;
+      else if (f.watt === '1000') ok = ok && p.watts === 1000;
+      else if (f.watt === '1200-1250') ok = ok && p.watts >= 1200 && p.watts <= 1250;
+      else if (f.watt === 'ge1300') ok = ok && p.watts >= 1300;
+      if (f.eff && p.efficiency.indexOf(f.eff) === -1) ok = false;
+      if (f.atx && p.atx !== f.atx) ok = false;
+      return ok;
+    }).slice().sort(function (a, b) {
+      if (a.watts !== b.watts) return a.watts - b.watts;
+      return (a.price || 0) - (b.price || 0);
+    });
+    // 已选型号若被筛掉也要保留在列表里，否则选择会静默失效
+    var sel = DB.psus.filter(function (p) { return p.id === S.psuId; })[0];
+    if (sel && list.indexOf(sel) === -1) list.push(sel);
+
     $('psuSelect').innerHTML = '<option value="">— 不校验 / 尚未选购 —</option>' +
-      optionsHtml(DB.psus, S.psuId, function (p) {
-        return p.brand + ' ' + p.model + '  ·  ' + p.watts + 'W  ·  ' + p.efficiency;
-      }, function (p) { return p.atx + ' · ' + p.tier + '档'; });
+      optionsHtml(list, S.psuId, function (p) {
+        return p.brand + ' ' + p.model + ' · ' + p.watts + 'W · ' + p.efficiency +
+          ' · ' + p.atx + (p.modular ? ' · ' + p.modular : '') +
+          ' · ' + psuConnSummary(p) + ' · ¥' + p.price;
+      }, function (p) { return psuWattBand(p.watts); });
+  }
+
+  function initPsu() {
+    buildPsuFilters();
+    refreshPsu();
     $('psuSelect').addEventListener('change', function () { S.psuId = this.value; render(); });
   }
 
@@ -792,11 +872,14 @@
       '<div class="d">场景预期负载率 ' + r.existingPsu.utilizationExpected + '%（' +
         esc(r.scenarioInfo.label) + '）</div></div></div>' +
       '<dl class="kv" style="margin-top:9px">' +
+      '<dt>额定功率</dt><dd>' + p.watts + ' W</dd>' +
       '<dt>效率认证</dt><dd>' + esc(p.efficiency) + '</dd>' +
       '<dt>规范</dt><dd>' + esc(p.atx) + '</dd>' +
+      '<dt>模组化</dt><dd>' + esc(p.modular) + '</dd>' +
       '<dt>12V-2x6 接口</dt><dd>' + p.conn12v2x6 + ' 个</dd>' +
       '<dt>PCIe 8pin 接口</dt><dd>' + p.pcie8pin + ' 个</dd>' +
       '<dt>CPU 8pin 接口</dt><dd>' + p.eps8pin + ' 个</dd>' +
+      '<dt>SATA 接口</dt><dd>' + (p.sata || 0) + ' 个</dd>' +
       '</dl>';
   }
 

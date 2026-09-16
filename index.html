@@ -6,7 +6,7 @@
 
 <!-- ---------------------------------------------------------------- SEO -- -->
 <title>台式机功耗计算器 · 电源瓦数怎么选</title>
-<meta name="description" content="选好 CPU、显卡、主板就能算出整机功耗，并直接给出该买多大瓦数的电源。覆盖 164 款 CPU 与 RTX 50 到 GTX 900 的 66 款显卡、23 家 AIC 厂商 2427 个板型，含 ATX 3.1 与 12V-2x6 接口校验。">
+<meta name="description" content="选好 CPU、显卡、主板就能算出整机功耗，并直接给出该买多大瓦数的电源。覆盖 164 款 CPU 与 RTX 50 到 GTX 900 的 71 款显卡、23 家 AIC 厂商 2386 个板型，含 ATX 3.1 与 12V-2x6 接口校验。">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://lightningz-msi.github.io/-/">
 
@@ -22,7 +22,7 @@
 <meta property="og:site_name" content="台式机功耗计算器">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:title" content="台式机功耗计算器 · 电源瓦数怎么选">
-<meta property="og:description" content="选好 CPU、显卡、主板就能算出整机功耗，并直接给出该买多大瓦数的电源。164 款 CPU、66 款显卡、2427 个显卡板型，老平台也支持。">
+<meta property="og:description" content="选好 CPU、显卡、主板就能算出整机功耗，并直接给出该买多大瓦数的电源。164 款 CPU、71 款显卡、2386 个显卡板型，老平台也支持。">
 <meta property="og:url" content="https://lightningz-msi.github.io/-/">
 <meta property="og:image" content="https://lightningz-msi.github.io/-/assets/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -30,7 +30,7 @@
 <meta property="og:image:alt" content="台式机功耗计算器">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="台式机功耗计算器 · 电源瓦数怎么选">
-<meta name="twitter:description" content="选好配置就能算出整机功耗，直接给出该买多大瓦数的电源。164 款 CPU、66 款显卡型号、23 家 AIC 厂商 2427 个板型。">
+<meta name="twitter:description" content="选好配置就能算出整机功耗，直接给出该买多大瓦数的电源。164 款 CPU、71 款显卡型号、23 家 AIC 厂商 2386 个板型。">
 <meta name="twitter:image" content="https://lightningz-msi.github.io/-/assets/og-image.png">
 
 <!-- -------------------------------------------------------------- 图标 -- -->
@@ -373,7 +373,19 @@
         <h2><span class="idx">10</span>校验已有电源<span class="hint">我为这套配置选了一款电源</span></h2>
         <div class="card-body">
           <div class="field">
-            <label>电源型号（可不选）</label>
+            <label>① 按功率筛选</label>
+            <div class="seg" id="psuFilterWatt"></div>
+          </div>
+          <div class="field">
+            <label>② 按 80PLUS 认证筛选</label>
+            <div class="seg" id="psuFilterEff"></div>
+          </div>
+          <div class="field">
+            <label>③ 按规范筛选</label>
+            <div class="seg" id="psuFilterAtx"></div>
+          </div>
+          <div class="field">
+            <label>电源型号（可不选）<span class="unit">选项含功率 / 认证 / 规范 / 供电接口</span></label>
             <select id="psuSelect"></select>
           </div>
           <div id="psuInfo"></div>
