@@ -706,7 +706,13 @@
       cn: '魔鹰', sku: 'GV-R9070XTGAMINGOC-16GD', tier: 'mainstream',
       tbp: 304, ocLimit: 320, ocBias: 'moderate', connector: '2× 8pin',
       length: 288, slots: 2.5, recPsu: 750, liquid: false,
-      confidence: 'estimate', source: 'guru3d9070' }
+      confidence: 'estimate', source: 'guru3d9070' },
+    { id: 'gigabyte-aorus-elite-9070xt', gpuId: 'rx9070xt', vendor: '技嘉 GIGABYTE', series: 'AORUS ELITE',
+      cn: '小雕', sku: 'GV-R9070XTAORUS-E-16GD', tier: 'mainstream',
+      tbp: 304, ocLimit: 330, ocBias: 'moderate', connector: '3× 8pin',
+      length: 330, slots: 3, recPsu: 800, liquid: false,
+      confidence: 'review', source: 'guru3d9070',
+      note: '传统 3× 8pin 供电（非 16pin）。选电源时优先确保有 3 个独立 PCIe 8pin 输出，可避免 AMD 掉驱动。' }
   ];
 
   /* ==================================================== SKU 生成器 ===== */

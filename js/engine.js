@@ -869,7 +869,11 @@
           level: 'error', code: 'PSU_PCIE_COUNT',
           title: 'PCIe 8pin 接口数量不足',
           detail: '显卡需要 ' + need8 + ' 个 PCIe 8pin，电源只有 ' + psu.pcie8pin + ' 个。',
-          fix: '避免使用一分二转接线串联供电（单路超载风险），请更换接口更多的电源。'
+          fix: '避免使用一分二转接线串联供电（单路超载风险），请更换接口更多的电源。' +
+               (need8 >= 3
+                 ? ' AMD 多 8pin 显卡（如 ' + (gpu ? gpu.name : '本卡') + '）对供电稳定性非常敏感，' +
+                   '供电不稳是「掉驱动」的常见诱因，建议选择带 ' + need8 + ' 个独立 PCIe 8pin 输出的电源。'
+                 : '')
         });
       }
       if (need12 && psu.atx !== 'ATX 3.1') {
