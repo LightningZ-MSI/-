@@ -1146,7 +1146,7 @@
 
   root.HWDB = {
     meta: {
-      toolVersion: '1.0.1',
+      toolVersion: '1.0.2',
       version: '2026.09.7',
       updated: '2026-09-14',
       title: '台式机功耗与电源选型数据库',
