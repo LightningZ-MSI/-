@@ -33,16 +33,20 @@
   };
 
   /* ----------------------------------------------------------- 状态 ---- */
-  var S = {
-    scenario: 'gaming',
-    cpuBrand: 'Intel', cpuGen: '', cpuId: '', cpuOc: false, cpuCustomW: '',
-    gpuBrand: 'NVIDIA', gpuGen: '', gpuId: '', gpuAibId: '', gpuOc: false,
-    gpuCustomName: '', gpuCustomW: '',
-    moboId: '', ramId: '', ramKits: 1,
-    storage: [], coolerId: '', fanId: '', fanQty: 3,
-    caseId: '', argbChannels: 0, extras: {}, customItems: [],
-    psuId: '', budget: ''
-  };
+  function defaultState() {
+    return {
+      scenario: 'gaming',
+      cpuBrand: 'Intel', cpuGen: '', cpuId: '', cpuOc: false, cpuCustomW: '',
+      gpuBrand: 'NVIDIA', gpuGen: '', gpuId: '', gpuAibId: '', gpuOc: false,
+      gpuCustomName: '', gpuCustomW: '',
+      moboId: '', ramId: '', ramKits: 1,
+      storage: [], coolerId: '', fanId: '', fanQty: 3,
+      caseId: '', argbChannels: 0, extras: {}, customItems: [],
+      psuId: '', budget: ''
+    };
+  }
+
+  var S = defaultState();
 
   var lastResult = null;
   var feedback = [];
@@ -1378,6 +1382,20 @@
     toast('已载入示例配置：' + name);
   }
 
+  /* 重置配置：回到干净的空态。特意不走 location.reload() ——
+     整页重载会重新触发「数据声明」弹窗，用户每点一次「重置」都要重读一遍声明。 */
+  function resetState() {
+    var d = defaultState();
+    Object.keys(d).forEach(function (k) { S[k] = d[k]; });
+    feedback = [];
+    normalizeCpuFilter();
+    normalizeGpuFilter();
+    syncInputsFromState();
+    renderFeedback();
+    render();
+    toast('已重置配置');
+  }
+
   /* ============================================================ 启动 == */
   function boot() {
     try {
@@ -1440,7 +1458,7 @@
 
       $('btnReset').addEventListener('click', function () {
         try { localStorage.removeItem(LS_KEY); } catch (e) {}
-        location.reload();
+        resetState();
       });
 
       /* 主题切换：图标 + 文字两个部分，文字在 .theme-label 里 */
