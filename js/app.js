@@ -658,35 +658,50 @@
     return '≥1300W';
   }
 
-  function buildPsuFilters() {
-    var watts = [
+  var PSU_FILTER_SPECS = {
+    watt: [
       { v: '', t: '全部' }, { v: 'le650', t: '≤650W' },
       { v: '750-850', t: '750~850W' }, { v: '1000', t: '1000W' },
       { v: '1200-1250', t: '1200~1250W' }, { v: 'ge1300', t: '≥1300W' }
-    ];
-    var effs = [
+    ],
+    eff: [
       { v: '', t: '全部' }, { v: '钛金', t: '钛金' }, { v: '铂金', t: '铂金' },
       { v: '金牌', t: '金牌' }, { v: '铜牌', t: '铜牌' }
-    ];
-    var atxs = [
+    ],
+    atx: [
       { v: '', t: '全部' }, { v: 'ATX 3.1', t: 'ATX 3.1' }, { v: 'ATX 3.0', t: 'ATX 3.0' }
-    ];
-    function seg(el, list, key) {
+    ]
+  };
+
+  function psuFilterRowEl(key) {
+    return key === 'watt' ? $('psuFilterWatt')
+      : key === 'eff' ? $('psuFilterEff') : $('psuFilterAtx');
+  }
+
+  /* 重绘某一行的筛选按钮（按当前 psuF 高亮），点筛选后调用，
+     否则按钮永远停在「全部」上，用户点哪都没反馈。 */
+  function renderPsuFilterRow(key) {
+    var el = psuFilterRowEl(key);
+    if (!el) return;
+    el.innerHTML = PSU_FILTER_SPECS[key].map(function (o) {
+      return '<button type="button" data-v="' + esc(o.v) + '"' +
+        (psuF[key] === o.v ? ' class="on"' : '') + '>' + esc(o.t) + '</button>';
+    }).join('');
+  }
+
+  function buildPsuFilters() {
+    ['watt', 'eff', 'atx'].forEach(function (key) { renderPsuFilterRow(key); });
+    ['watt', 'eff', 'atx'].forEach(function (key) {
+      var el = psuFilterRowEl(key);
       if (!el) return;
-      el.innerHTML = list.map(function (o) {
-        return '<button type="button" data-v="' + esc(o.v) + '"' +
-          (psuF[key] === o.v ? ' class="on"' : '') + '>' + esc(o.t) + '</button>';
-      }).join('');
       el.addEventListener('click', function (e) {
         var b = e.target.closest('button');
         if (!b || b.dataset.v === psuF[key]) return;
         psuF[key] = b.dataset.v;
-        refreshPsu();
+        renderPsuFilterRow(key);   // 高亮当前选中的筛选
+        refreshPsu();              // 按筛选重建下拉选项
       });
-    }
-    seg($('psuFilterWatt'), watts, 'watt');
-    seg($('psuFilterEff'), effs, 'eff');
-    seg($('psuFilterAtx'), atxs, 'atx');
+    });
   }
 
   function refreshPsu() {
