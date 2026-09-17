@@ -15,7 +15,7 @@
  *    4. 移动端底部常驻条，同步显示推荐瓦数
  *    5. 数据声明弹窗（打开页面时自动出现，顶栏按钮可重开）
  *
- *  加载位置：app.js 之后（需要读取 app.js 渲染后的 DOM）。
+ *  在 head 加载以决定首帧；DOMContentLoaded 初始化时 app.js 已渲染 DOM。
  * ==========================================================================*/
 (function () {
   'use strict';
@@ -417,7 +417,13 @@
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
 
-    if (!suppressed()) open();
+    if (!suppressed()) {
+      if (document.documentElement.classList.contains('psu-boot-active')) {
+        document.addEventListener('psu:boot-end', function () {
+          if (!suppressed()) open();
+        }, { once: true });
+      } else open();
+    }
 
     // 供自动化测试 / 其他脚本调用
     window.__PSU_DISCLAIMER__ = { open: open, close: close, isOpen: isOpen };
@@ -459,4 +465,120 @@
   } else {
     boot();
   }
+})();
+
+/* 一次性启动：5.0s 启动 + 1.2s 内容填充。仅呈现，不修改配置或计算值。 */
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  // 首次设置折叠态也不应在 noanim 路径上闪出一次收起过渡。
+  root.classList.add('psu-ui-initializing');
+  function settleInitialLayout() {
+    void document.body.offsetHeight;
+    root.classList.remove('psu-ui-initializing');
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', settleInitialLayout, { once: true });
+  else settleInitialLayout();
+  var key = 'psu-boot-seen-v1';
+  var motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var seen = false;
+  try { seen = sessionStorage.getItem(key) === '1'; } catch (e) {}
+  if (window.__PSU_NOANIM || new URLSearchParams(location.search).get('noanim') === '1' ||
+      motion.matches || window.matchMedia('print').matches || seen) return;
+
+  root.classList.add('psu-boot-active', 'psu-boot-pending');
+  var done = false, timers = [], inertNodes = [], fills = [];
+  var inputEvents = ['pointerdown', 'click', 'keydown', 'touchstart'];
+
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+  function finish(event) {
+    if (done) return;
+    done = true;
+    // 跳过手势不穿透到页面按钮或随后出现的声明弹窗。
+    if (event && inputEvents.indexOf(event.type) !== -1) {
+      if (event.cancelable) event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+    timers.forEach(clearTimeout);
+    root.classList.remove('psu-boot-active', 'psu-boot-pending', 'psu-boot-running',
+      'psu-boot-reveal', 'psu-boot-fill');
+    inertNodes.forEach(function (el) { el.inert = false; });
+    fills.forEach(function (el) {
+      el.classList.remove('psu-boot-item');
+      el.style.removeProperty('--psu-boot-delay');
+    });
+    inputEvents.forEach(function (type) { document.removeEventListener(type, finish, true); });
+    motion.removeEventListener('change', onMotion);
+    window.removeEventListener('beforeprint', finish);
+    window.removeEventListener('pagehide', finish);
+    document.removeEventListener('visibilitychange', onVisibility);
+    try { sessionStorage.setItem(key, '1'); } catch (e) {}
+    document.dispatchEvent(new Event('psu:boot-end'));
+  }
+  function onMotion(event) { if (event.matches) finish(); }
+  function onVisibility() { if (document.hidden) finish(); }
+  inputEvents.forEach(function (type) {
+    document.addEventListener(type, finish, { capture: true, passive: false });
+  });
+  motion.addEventListener('change', onMotion);
+  window.addEventListener('beforeprint', finish);
+  window.addEventListener('pagehide', finish);
+  document.addEventListener('visibilitychange', onVisibility);
+  // 数据脚本下载异常时也不留下永久黑幕。
+  later(finish, 10000);
+
+  function start() {
+    if (done) return;
+    if (window.__PSU_NOANIM || motion.matches) { finish(); return; }
+    Array.prototype.forEach.call(document.body.children, function (el) {
+      if (!el.matches('.psu-boot, script, noscript, style') && !el.inert) {
+        el.inert = true;
+        inertNodes.push(el);
+      }
+    });
+    function group(selector, first, last) {
+      var nodes = document.querySelectorAll(selector);
+      Array.prototype.forEach.call(nodes, function (el, i) {
+        el.classList.add('psu-boot-item');
+        el.style.setProperty('--psu-boot-delay',
+          (first + (last - first) * i / Math.max(1, nodes.length - 1)) + 'ms');
+        fills.push(el);
+      });
+    }
+    // 框架先在 4.4–5.0s 淡入；只对内容施加延迟，不覆盖折叠容器的透明度。
+    group('.col-config .guide > .card-body, .col-config .card-body-in, .col-config .card-summary', 0, 560);
+    group('.reco > :not(.reco-label), .hero > div', 420, 680);
+    group('.col-result .card-body, .wrap > details', 600, 840);
+    root.classList.add('psu-boot-running');
+    later(function () {
+      root.classList.remove('psu-boot-pending');
+      root.classList.add('psu-boot-reveal');
+    }, 4400);
+    later(function () { root.classList.add('psu-boot-fill'); }, 5000);
+    later(finish, 6200);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+  else start();
+})();
+
+/* 用户改变选项后提供局部确认；不订阅结果重算，避免批量渲染闪烁。 */
+(function () {
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function clear() {
+    document.querySelectorAll('.psu-ui-feedback').forEach(function (el) { el.classList.remove('psu-ui-feedback'); });
+  }
+  document.addEventListener('change', function (event) {
+    if (reduced.matches || document.documentElement.classList.contains('psu-boot-active')) return;
+    var input = event.target;
+    if (!input.matches('select, input[type="checkbox"], input[type="radio"], input[type="number"]')) return;
+    var target = input.closest('.switch') || input;
+    target.classList.remove('psu-ui-feedback');
+    void target.offsetWidth; // 重新触发有限动画；快速连续切换也只保留当前反馈。
+    target.classList.add('psu-ui-feedback');
+  });
+  document.addEventListener('animationend', function (event) {
+    if (event.animationName === 'psu-ui-feedback') event.target.classList.remove('psu-ui-feedback');
+  });
+  reduced.addEventListener('change', clear);
+  window.addEventListener('beforeprint', clear);
 })();

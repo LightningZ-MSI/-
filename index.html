@@ -65,11 +65,27 @@
 </script>
 
 <link rel="stylesheet" href="assets/style.css">
+<!-- 首帧前决定是否播放；ui.js 的 DOM 初始化仍在 DOMContentLoaded、app.js 之后。 -->
+<script src="js/ui.js"></script>
 </head>
 <body>
+<div class="psu-boot" aria-hidden="true">
+  <div class="psu-boot-focus">
+    <div class="psu-boot-mark">
+      <span class="psu-boot-half psu-boot-half-a"></span>
+      <span class="psu-boot-half psu-boot-half-b"></span>
+    </div>
+    <p class="psu-boot-title">台式机功耗计算器</p>
+    <div class="psu-boot-meter">
+      <div class="psu-boot-line"></div>
+      <div class="psu-boot-ticks"><i></i><i></i><i></i></div>
+    </div>
+  </div>
+</div>
 
 <!-- 页面内容由 JavaScript 渲染，这里为禁用 JS 的访问者与部分爬虫提供兜底说明 -->
 <noscript>
+  <style>.psu-boot { display: none !important; }</style>
   <div style="max-width:760px;margin:40px auto;padding:24px;border:1px solid #23303f;border-radius:10px;font:14px/1.8 -apple-system,'Segoe UI','Microsoft YaHei',sans-serif;color:#e6edf3;background:#131a23">
     <h1 style="font-size:18px;margin:0 0 12px">台式机功耗计算器</h1>
     <p>本工具需要启用 JavaScript 才能运行。它可以根据你选择的 CPU、显卡、主板、内存、存储等硬件，
@@ -84,15 +100,9 @@
 <header class="top">
   <div class="top-inner">
     <div class="logo">
-      <!-- ROG 官方锁定版：图形本体 + REPUBLIC OF GAMERS 字标。
-           两张图都是从华硕官方 logo 图里切出来的（tools/build-logo.mjs）——
-           字标是定制字形，网页字体里没有，只能用图。
-           这里横向排布（图形在左、字标在右），即官方「横向锁定版」的排法；
-           顶栏是横向布局，纵向锁定版会把标题挤下去。
-           用 CSS mask 上色：mask 只取 alpha，颜色由 --rog 给，
-           所以深浅主题切换时 logo 会自动跟着换，不需要维护两套图。 -->
-      <span class="mark" role="img" aria-label="ROG 玩家国度之眼"></span>
-      <span class="wordmark" role="img" aria-label="REPUBLIC OF GAMERS"></span>
+      <!-- MSI LIGHTNING 闪电标记与字标；CSS mask 跟随站点主题色。 -->
+      <span class="mark" role="img" aria-label="MSI LIGHTNING 闪电标记"></span>
+      <span class="wordmark" role="img" aria-label="MSI LIGHTNING"></span>
       <div class="logo-text">
         <h1>台式机功耗计算器</h1>
         <small>v<span id="toolVersion">—</span> · 数据版本 <span id="dbVersion">—</span> · 截止 <span id="dbDate">—</span></small>
@@ -565,8 +575,8 @@
   <div class="modal-card" role="dialog" aria-modal="true"
        aria-labelledby="dmTitle" aria-describedby="dmBody">
     <div class="modal-head">
-      <span class="mark" role="img" aria-label="ROG 玩家国度之眼"></span>
-      <span class="wordmark" role="img" aria-label="REPUBLIC OF GAMERS"></span>
+      <span class="mark" role="img" aria-label="MSI LIGHTNING 闪电标记"></span>
+      <span class="wordmark" role="img" aria-label="MSI LIGHTNING"></span>
       <h2 id="dmTitle">使用前请阅读</h2>
       <button type="button" class="modal-x" id="dmClose" aria-label="关闭声明">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -635,8 +645,5 @@
 <script src="js/db.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/app.js"></script>
-<!-- 改版增强层：卡片折叠 / 步骤高亮 / 说明收纳 / 移动端结果条。
-     放在 app.js 之后，不修改任何 id，不参与计算。 -->
-<script src="js/ui.js"></script>
 </body>
 </html>

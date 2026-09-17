@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="40" viewBox="0 0 240 40">
+  <title>POWER Z</title>
+  <g transform="translate(12 0) skewX(-14)" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="bevel">
+    <path d="M6 32V8H23V20H6 M34 8H53V32H34Z M63 8L67 32H73L79 15L84 32H90L95 8 M123 8H105V32H123 M105 20H120 M134 32V8H153V20H134 M144 20L156 32"/>
+  </g>
+  <path fill="currentColor" d="M192 8H227L202 27H221L217 32H186L210 13H188Z"/>
+</svg>
