@@ -417,113 +417,10 @@
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
 
-    /* 首访的自动弹出**延后**到启动序列结束之后再执行（见 setupBoot）——
-       参考录屏里启动屏期间不会叠弹窗。这里只登记「本次需不需要弹」。 */
-    var needed = !suppressed();
+    if (!suppressed()) open();
 
     // 供自动化测试 / 其他脚本调用
     window.__PSU_DISCLAIMER__ = { open: open, close: close, isOpen: isOpen };
-    return { needed: needed, open: open };
-  }
-
-  /* --------------------------------------------------------- 动效开关 ----
-     与 ?nodisclaimer=1 同一套约定：URL 参数优先，其次是给自动化用的
-     window.__PSU_NOANIM（脚本执行前就能读到），最后尊重系统的「减少动态效果」。
-     三者任一成立 → 一步都不播，而不是「加速播」。 */
-  function animDisabled() {
-    try {
-      if (/(?:^|[?&])noanim=1(?:&|$)/.test(location.search)) return true;
-    } catch (e) { /* file:// 等场景忽略 */ }
-    if (window.__PSU_NOANIM) return true;
-    try {
-      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        return true;
-      }
-    } catch (e) { /* 老浏览器忽略 */ }
-    return false;
-  }
-
-  /* ------------------------------------------------ 启动序列（Phase A）--
-     节奏来自对参考录屏的**逐帧量化**（1152×720 / 11.925s）：
-       · 开机段 0→1.6s 是一块中灰底（亮度 48/255、近黑像素仅 9%），
-         白色内容分几次离散跳变增长，红色横跨整个宽度
-       · 帧差中位数只有 0.30（几乎静止），整段**只有一次真硬切**（df=14.1）收尾
-     这里是**用户指定**的时长：整段 ≥5 秒，覆盖录屏实测的 1.6 秒。
-     只保留实测的两条**形状**约束：遮罩硬切出现、结束时 90ms 硬切离开（不做长淡出）。
-     时间轴：T0 遮罩已在首帧 → T1 刻度线离散推进 4600ms（步进 8 档）+ 静止 600ms
-             → T2 90ms 硬切离开 → T3 交接给声明弹窗。总时长约 5.29 秒。
-     任意 click / keydown / touchstart 立即跳到 T3。 */
-  var SPLASH_MS = 5200;   // = 刻度推进 4600ms（与 style.css 的 transition 对齐）+ 收尾静止 600ms
-
-  function setupBoot(afterBoot) {
-    var el = $('boot');
-    var root = document.documentElement;
-    var finished = false;
-    var timers = [];
-
-    function clearTimers() {
-      timers.forEach(function (t) { clearTimeout(t); });
-      timers = [];
-    }
-    function unbind() {
-      document.removeEventListener('click', onInput, true);
-      document.removeEventListener('keydown', onInput, true);
-      document.removeEventListener('touchstart', onInput, true);
-    }
-    function settle(instant) {
-      root.classList.remove('is-booting');
-      root.dataset.boot = 'done';
-      if (instant && el) { el.classList.remove('is-out'); el.classList.add('is-done'); }
-      if (afterBoot) afterBoot();
-    }
-    /* 完全不播（?noanim=1 / reduced-motion / 遮罩节点缺失）：首帧即「已完成」 */
-    function skipAll() {
-      if (finished) return;
-      finished = true; clearTimers(); unbind();
-      if (el) el.classList.add('is-done');
-      settle(true);
-    }
-    /* 用户中途催促：立刻结束，不等那 90ms 过渡 */
-    function skipNow() {
-      if (finished) return;
-      finished = true; clearTimers(); unbind();
-      settle(true);
-    }
-    function onInput() { skipNow(); }
-
-    if (!el || animDisabled()) { skipAll(); return; }
-
-    root.dataset.boot = 'running';
-    root.classList.add('is-booting');
-
-    /* 让刻度线跑起来。必须先把 scaleX(0) 的初始样式**同步提交**一次
-       （读 offsetWidth 强制 style/layout 计算），再切 is-run 才会真的产生过渡；
-       若与首帧样式同帧生效，浏览器会把两次样式合并、过渡被跳过。
-       这里刻意不用 requestAnimationFrame：无头环境（--dump-dom）不产生渲染帧，
-       rAF 不触发，进度条会一直停在 0。 */
-    void el.offsetWidth;
-    if (!finished) el.classList.add('is-run');
-
-    document.addEventListener('click', onInput, true);
-    document.addEventListener('keydown', onInput, true);
-    document.addEventListener('touchstart', onInput, true);
-
-    // bfcache 返回（浏览器后退）：页面是恢复的，不该再播一次
-    window.addEventListener('pageshow', function (e) { if (e.persisted) skipNow(); });
-
-    timers.push(setTimeout(function () {          // T1：静止 550ms
-      if (finished) return;
-      unbind();
-      if (el) el.classList.add('is-out');         // T2：90ms 硬切离开
-      root.classList.remove('is-booting');        // T3：先解锁滚动
-      root.dataset.boot = 'done';
-      timers.push(setTimeout(function () {        // T3 收尾：移出渲染树后才开声明弹窗
-        if (finished) return;
-        finished = true;
-        if (el) el.classList.add('is-done');
-        if (afterBoot) afterBoot();
-      }, 90));
-    }, SPLASH_MS));
   }
 
   /* ------------------------------------------------------------ 启动 --- */
@@ -534,12 +431,7 @@
       setupActiveHighlight();
       collapseNotes();
       setupMobileBar();
-      var disclaimer = setupDisclaimer();
-
-      // 启动序列：跑完（或直接降级）之后，才让首访的声明弹窗出现
-      setupBoot(function () {
-        if (disclaimer && disclaimer.needed) disclaimer.open();
-      });
+      setupDisclaimer();
 
       // 控件值变化 → 刷新摘要
       // 用捕获阶段监听，不影响 app.js 自己的监听器

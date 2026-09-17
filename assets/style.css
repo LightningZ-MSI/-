@@ -64,13 +64,6 @@
 
   --ease: cubic-bezier(.4, 0, .2, 1);
   --dur: 150ms;
-  /* 动效：只有这 5 个取值。奥创的动感来自「硬切 + 快起硬停」，不来自弹性与长时长。
-     与主题无关，因此不在 html[data-theme="light"] 里重复（见 tools/browsertest.mjs 的 THEME_FREE）。 */
-  --ease-mech:  cubic-bezier(.2, 1, .3, 1);  /* 伺服感：立刻给力、末尾硬停、不过冲 */
-  --dur-fast:   90ms;    /* 状态反馈：hover / focus / press */
-  --dur-base:   150ms;   /* 与既有 --dur 同值，新代码用语义名 */
-  --dur-panel:  240ms;   /* 面板展开、滑动迁移、卡片入位 */
-  --dur-hero:   420ms;   /* 仅首屏揭示等极少数场合 */
   --shadow-float: 0 8px 32px rgba(0, 0, 0, .6);
 }
 
@@ -377,7 +370,7 @@ button, .btn {
               background-color var(--dur) var(--ease);
 }
 button:hover, .btn:hover { color: var(--text); border-color: var(--text-4); }
-button.primary { background: var(--rog); border-color: transparent; color: #fff; }
+button.primary { background: var(--rog); border-color: var(--rog); color: #fff; }
 button.primary:hover { background: var(--rog-dim); border-color: var(--rog-dim); color: #fff; }
 button.ghost { background: none; }
 button:disabled { opacity: .4; cursor: not-allowed; }
@@ -461,7 +454,7 @@ select option, select optgroup { background: var(--bg-soft); color: var(--text);
   width: 14px; height: 14px; border-radius: 50%; background: var(--text-4);
   transition: transform var(--dur) var(--ease), background-color var(--dur) var(--ease);
 }
-.switch input:checked + .track { background: var(--rog); border-color: transparent; }
+.switch input:checked + .track { background: var(--rog); border-color: var(--rog); }
 .switch input:checked + .track::after { transform: translateX(18px); background: #fff; }
 .switch input:focus-visible + .track { outline: 2px solid var(--rog); outline-offset: 2px; }
 
@@ -866,63 +859,6 @@ body.modal-open { overflow: hidden; }
 ::-webkit-scrollbar-thumb { background: var(--line); }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-4); }
 
-/* ======================================================== 动效（Phase A–C）==
-
-   依据《改版方案/05-动效规范.md》。全段三条硬约束：
-     · 只用 opacity / transform —— 不触发布局，不产生 layout thrash
-     · 无 @keyframes、无 animation —— 一律 transition + 定时器；因此 designcheck
-       的 keyframes 白名单目前为空（将来真要新增动画时才登记进去）
-     · 每一段都必须能被 ?noanim=1 / window.__PSU_NOANIM / prefers-reduced-motion 完全关掉
-
-   ── Phase A：启动遮罩（A2 方案，节奏按参考录屏逐帧量化后复现）──────────
-   实测（1152×720 / 11.925s 录屏的开机段）：启动屏平均亮度 48/255、近黑像素仅 9%
-   （随后的暗色 UI 是亮度 21 / 近黑 87%）→ 启动屏是一块**中灰底**；
-   白色内容分几次离散跳变增长（帧差中位数 0.30，几乎静止），红色横跨整个宽度；
-   整段只有一次硬切（df=14.1）收尾。这里只复现这些**参数**，画面用站点自有图形。
-   时长「至少 5 秒」为**用户指定**（覆盖录屏实测的 1.6 秒）。
-   注：boot-mark 与 boot-track 各用掉一处 var(--rog)，已分别从 button.primary
-   与 .switch .track 的「描边与底色同色、视觉上本来就不可见」的冗余写法里回收，
-   总数仍为 30 处（designcheck 上限）。 */
-#boot {
-  position: fixed; inset: 0; z-index: 9999;
-  display: grid; place-items: center; align-content: center; gap: 26px;
-  background: #303030;          /* 字面量：中灰启动底（实测亮度≈48），不跟随主题 */
-  padding: 0;
-}
-/* 硬切离开：90ms 透明度切换（实测切换 ≤25ms，这里取规范给的过渡上限） */
-#boot.is-out { opacity: 0; pointer-events: none; transition: opacity var(--dur-fast) linear; }
-#boot.is-done { display: none; }   /* 过渡结束后彻底移出渲染树 */
-/* #boot 是 fixed 覆盖层、不占文档流，收起时不改变文档高度（反 CLS） */
-
-/* 站点自有签名：三条斜杠。与卡片分区标记同一套视觉语言（纯矩形 + skew，无渐变） */
-#boot .boot-mark { display: flex; gap: 6px; }
-#boot .boot-mark i {
-  display: block; width: 5px; height: 34px;
-  background: var(--rog);
-  transform: skewX(-20deg);
-}
-
-/* 刻度线：通到底（实测红色 bbox 横跨 x 0→1），离散推进。
-   用 steps(8) 而不是平滑过渡 —— 实测启动段帧差中位数只有 0.30（几乎静止），
-   内容是在几次跳变里长出来的，平滑推进反而不像。
-   4600ms 与 js/ui.js 的 SPLASH_MS 对应（整段 ≥5 秒为用户指定）。 */
-#boot .boot-track {
-  display: block; width: 100%; height: 2px;
-  background: var(--line); overflow: hidden;
-}
-#boot .boot-track i {
-  display: block; width: 100%; height: 100%;
-  background: var(--rog);
-  transform: scaleX(0); transform-origin: left center;
-}
-#boot.is-run .boot-track i {
-  transform: scaleX(1);
-  transition: transform 4600ms steps(8, end);
-}
-
-/* 启动期间锁滚动，T3 时释放 */
-html.is-booting { overflow: hidden; }
-
 /* ================================================== ③ 响应式 与 打印 == */
 
 .mobile-bar { display: none; }
@@ -1031,7 +967,6 @@ html.is-booting { overflow: hidden; }
     --line: #bbb; --line-soft: #ddd;
     --rog: #000; --rog-dim: #000; --warn: #000; --err: #000; --ok: #000;
   }
-  #boot,
   header.top, .top-actions, .layout > .col-config,
   .toast, button, .btn, details.section-collapse,
   .mobile-bar, .card-toggle, .banner, .answer-chip,
