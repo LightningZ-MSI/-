@@ -126,6 +126,11 @@
 </header>
 
 <div class="wrap">
+  <section class="page-intro" aria-label="计算器介绍">
+    <p class="eyebrow">POWER SUPPLY CALCULATOR</p>
+    <h2>为你的配置，选好电源。</h2>
+    <p>选择硬件，即时查看整机功耗与推荐瓦数。</p>
+  </section>
 
   <div class="layout">
 
@@ -137,10 +142,15 @@
         <!-- 这一栏没有序号：它不是「第 1 步」，而是说明。原来这里放了个「?」，
              和前面的 /// 分区标记挤在一起读成「/// ? 使用方法」，很脏。
              分区标记本身就足以表明这是一个分区。 -->
-        <h2>使用方法<span class="hint">3 步</span>
+        <h2>选择硬件<span class="hint">按配置填写</span>
           <button id="btnHideGuide" class="card-toggle" type="button" aria-label="关闭引导"></button>
         </h2>
         <div class="card-body">
+          <div class="guide-actions">
+            <button id="btnQuickStart" class="primary">载入示例配置</button>
+          </div>
+
+          <details class="guide-help"><summary>使用帮助</summary>
           <ol class="guide-steps">
             <li>
               <span class="gi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="8" cy="17" r="2" fill="currentColor" stroke="none"/></svg></span>
@@ -155,10 +165,6 @@
               <b>查风险</b><span>按提示调整</span>
             </li>
           </ol>
-
-          <div class="guide-actions">
-            <button id="btnQuickStart" class="primary">载入示例配置</button>
-          </div>
 
           <details class="glossary">
             <summary>术语</summary>
@@ -180,7 +186,7 @@
               <dt>80 PLUS 金牌 / 铂金 / 钛金</dt>
               <dd>电源效率等级，不代表额定瓦数或整体品质。</dd>
             </dl>
-          </details>
+          </details></details>
         </div>
       </section>
 
@@ -209,6 +215,7 @@
             <label>③ 型号 <span class="unit">（收录 Intel 10 代起 / AMD Zen 起）</span></label>
             <select id="cpuSelect"></select>
           </div>
+          <details class="advanced-options"><summary>高级设置 · 超频与功耗</summary><div>
           <div class="grid2">
             <div class="field">
               <label>超频模式</label>
@@ -223,6 +230,7 @@
               <input type="number" id="cpuCustomW" min="35" max="600" step="5" placeholder="自动">
             </div>
           </div>
+          </div></details>
           <div id="cpuInfo" style="margin-top:10px"></div>
         </div>
       </section>
@@ -247,6 +255,7 @@
             <label>④ AIC 厂商 / 板型 <span class="unit">（影响功耗墙与供电接口）</span></label>
             <select id="gpuAib"></select>
           </div>
+          <details class="advanced-options"><summary>高级设置 · 超频与自定义显卡</summary><div>
           <div class="grid2">
             <div class="field" style="margin-bottom:0">
               <label>显卡超频</label>
@@ -265,6 +274,7 @@
             <label>手动功耗 <span class="unit">(W，仅未收录型号时生效)</span></label>
             <input type="number" id="gpuCustomW" min="10" max="1200" step="5" placeholder="自动">
           </div>
+          </div></details>
           <div id="gpuInfo" style="margin-top:10px"></div>
         </div>
       </section>
@@ -553,14 +563,14 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- ========================= 使用须知弹窗（用户主动打开）==========
+<!-- ========================= 使用须知弹窗（启动后展示，可选择不再提示）==========
      原「数据来源」卡片与显卡卡里的两段声明都搬到了这里，
      所以 id="sources" 与 id="aibCatalogNote" 依然存在 —— app.js 不需要改。
      顶栏的「数据声明」按钮可以随时重新打开。
      ==================================================================== -->
 <div class="modal-backdrop" id="disclaimerModal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true"
-       aria-labelledby="dmTitle" aria-describedby="dmBody">
+       aria-labelledby="dmTitle" aria-describedby="dmSummary">
     <div class="modal-head">
       <span class="mark" role="img" aria-label="MSI LIGHTNING 闪电标记"></span>
       <span class="wordmark" role="img" aria-label="MSI LIGHTNING"></span>
@@ -572,25 +582,31 @@
     </div>
 
     <div class="modal-body" id="dmBody">
+      <p class="modal-lead" id="dmSummary">开始前，了解这三点。</p>
       <ul class="usage-points">
         <li>功耗为估算，选型请结合厂商建议。</li>
         <li>部分板型与旧卡数据为推算，已标注来源。</li>
         <li>购买前请确认供电接口、尺寸与保修。</li>
       </ul>
       <details class="result-explain">
+        <summary>估算方法与使用范围</summary>
+        <p>规划功耗按各部件的功耗上限合计；场景预期功耗按所选用途折算；推荐瓦数包含余量。真实功耗会随软件负载、BIOS 设置、超频和温度变化。</p>
+        <p>本工具用于电源选型参考，不替代实际测量及厂商建议。80 PLUS 表示转换效率，不代表电源品质或额定功率。</p>
+      </details>
+      <details class="result-explain">
         <summary>数据来源与标记说明</summary>
-        <p>official：官方规格；review：评测；estimate：估算；leak：未经发布确认。</p>
+        <p>official：官方规格；review：评测数据；estimate：推算值；leak：未经发布确认。未发布型号的规格可能变化，不应作为购买依据。</p>
         <div class="note warn" id="aibCatalogNote"></div>
         <ul class="src-list" id="sources"></ul>
       </details>
       <details class="result-explain">
         <summary>旧卡与二手硬件说明</summary>
-        <p>部分已停产旧卡数据为估算。建议额外留一档功率余量，并确认成色与保修。</p>
+        <p>部分已停产旧卡与非公版板型的功耗为估算。二手硬件还需核对实际型号、维修情况、供电接口及保修；电源老化和不同 BIOS 的功耗限制可能影响选型，建议额外留一档余量。</p>
       </details>
     </div>
 
     <div class="modal-foot">
-      <label class="chk" for="dmNever" hidden>
+      <label class="chk" for="dmNever">
         <input type="checkbox" id="dmNever">
         <span>不再提示</span>
       </label>

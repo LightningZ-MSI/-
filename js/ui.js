@@ -13,7 +13,7 @@
  *    3. 把配置列里冗长的 .note 说明收成两行 + ⓘ 展开（结果列的说明不动，
  *       因为那是"答案的一部分"，折叠它反而有害）
  *    4. 移动端底部常驻条，同步显示推荐瓦数
- *    5. 使用须知弹窗（仅由顶栏或推荐区入口主动打开）
+ *    5. 精简使用须知弹窗（启动后展示，也可主动打开）
  *
  *  在 head 加载以决定首帧；DOMContentLoaded 初始化时 app.js 已渲染 DOM。
  * ==========================================================================*/
@@ -341,7 +341,7 @@
      声明都搬进了这里，所以 id="sources" / id="aibCatalogNote" 都还在原位
      （只是换了父节点），app.js 一行都不用改。
 
-     用户主动打开，不在首次访问或动画结束后弹出。 */
+     启动结束后展示；支持不再提示和主动打开。 */
 
   function setupDisclaimer() {
     var m = $('disclaimerModal');
@@ -352,10 +352,19 @@
     var okBtn = $('dmOk');
     var xBtn = $('dmClose');
     var lastFocus = null;
+    var closeTimer = null;
+    var never = $('dmNever');
+    var preferenceKey = 'psu-calc-2026-v1-disclaimer';
+    function version() { return window.HWDB && window.HWDB.meta.version || '1'; }
+    function suppressed() {
+      if (new URLSearchParams(location.search).get('nodisclaimer') === '1' || location.hash === '#nodisclaimer') return true;
+      try { return localStorage.getItem(preferenceKey) === version(); } catch (e) { return false; }
+    }
 
     function isOpen() { return !m.hidden; }
 
     function open() {
+      if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; m.classList.remove('is-closing'); return; }
       if (isOpen()) return;
       lastFocus = document.activeElement;
       m.hidden = false;
@@ -365,13 +374,25 @@
     }
 
     function close() {
-      if (!isOpen()) return;
-      m.hidden = true;
-      document.body.classList.remove('modal-open');
-      if (lastFocus && lastFocus.focus) {
-        try { lastFocus.focus({ preventScroll: true }); } catch (e) {}
+      if (!isOpen() || closeTimer) return;
+      if (never && never.checked) {
+        try { localStorage.setItem(preferenceKey, version()); } catch (e) {}
       }
-      lastFocus = null;
+      function finishClose() {
+        closeTimer = null;
+        m.hidden = true;
+        m.classList.remove('is-closing');
+        document.body.classList.remove('modal-open');
+        if (lastFocus && lastFocus.focus) {
+          try { lastFocus.focus({ preventScroll: true }); } catch (e) {}
+        }
+        lastFocus = null;
+      }
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) finishClose();
+      else {
+        m.classList.add('is-closing');
+        closeTimer = setTimeout(finishClose, 160);
+      }
     }
 
     openBtn.addEventListener('click', open);
@@ -397,6 +418,11 @@
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
+
+    function autoOpen() { if (!suppressed()) open(); }
+    if (document.documentElement.classList.contains('psu-boot-active')) {
+      document.addEventListener('psu:boot-end', autoOpen, { once: true });
+    } else autoOpen();
 
     // 供自动化测试 / 其他脚本调用
     window.__PSU_DISCLAIMER__ = { open: open, close: close, isOpen: isOpen };
@@ -565,6 +591,16 @@
     var observer = new MutationObserver(refresh);
     function refresh() {
       observer.disconnect();
+      root.querySelectorAll('.psu-pick').forEach(function (pick) {
+        if (pick.querySelector('details')) return;
+        var specs = pick.querySelectorAll('.sp, .pr');
+        if (!pick.querySelector('.w') || !specs.length) return;
+        var detail = document.createElement('details'); detail.className = 'pick-specs';
+        var summary = document.createElement('summary'); summary.textContent = '规格与参考价';
+        detail.appendChild(summary);
+        specs.forEach(function (el) { detail.appendChild(el); });
+        pick.appendChild(detail);
+      });
       var explanation = root.querySelector('.explain-content');
       var previous = explanation.querySelector('.recommendation-math');
       var formula = root.querySelector('#recoSub > span');
@@ -600,6 +636,26 @@
       observer.observe(root, { childList: true, subtree: true, characterData: true });
     }
     refresh();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup, { once: true });
+  else setup();
+})();
+
+/* 推荐数值真实变化时做一次局部反馈；不滚动数字，不修改结果。 */
+(function () {
+  function setup() {
+    var target = document.getElementById('recoBig');
+    if (!target) return;
+    var last = target.textContent;
+    new MutationObserver(function () {
+      var value = target.textContent;
+      if (value === last) return;
+      last = value;
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('psu-boot-active')) return;
+      target.classList.remove('psu-ui-feedback');
+      void target.offsetWidth;
+      target.classList.add('psu-ui-feedback');
+    }).observe(target, { childList: true, subtree: true, characterData: true });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup, { once: true });
   else setup();

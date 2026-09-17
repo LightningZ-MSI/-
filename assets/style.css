@@ -843,6 +843,25 @@ body.modal-open { overflow: hidden; }
 }
 .modal-foot button.primary { flex: 0 0 auto; }
 
+/* MSI-inspired hierarchy: quiet component rows and one clear result. */
+.page-intro { padding: 30px 0 40px; }
+.page-intro .eyebrow { margin: 0 0 10px; color: var(--text-3); font-size: 11px; letter-spacing: .16em; }
+.page-intro h2 { margin: 0 0 10px; font-size: clamp(25px, 3vw, 36px); line-height: 1.3; font-weight: 600; color: var(--text); }
+.page-intro > p:last-child { margin: 0; color: var(--text-3); }
+.advanced-options { border-top: 1px solid var(--line-soft); margin-top: 14px; }
+.advanced-options > summary { cursor: pointer; color: var(--text-3); font-size: 12px; padding: 12px 0; }
+.advanced-options > summary:hover { color: var(--text); }
+.advanced-options > div { padding: 4px 0 10px; }
+.modal-lead { margin: 6px 0 18px !important; color: var(--text) !important; font-size: 18px !important; font-weight: 600; }
+.modal-body .usage-points { list-style: none; padding: 0; counter-reset: notice; margin-bottom: 22px; }
+.usage-points li { counter-increment: notice; display: flex; align-items: baseline; gap: 12px; padding: 7px 0; }
+.usage-points li::before { content: '0' counter(notice); color: var(--text-3); font: 11px var(--mono); }
+.modal-body .result-explain { border-top: 1px solid var(--line); }
+.modal-body .result-explain > summary { padding: 14px 0; color: var(--text-2); }
+.modal-body .result-explain p { margin-bottom: 12px; }
+.modal-backdrop { opacity: 1; transition: opacity 160ms var(--ease); }
+.modal-backdrop.is-closing { opacity: 0; }
+
 /* ------------------------------------------------------------- 滚动条 - */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
@@ -1078,6 +1097,84 @@ html:not(.psu-boot-active) details[open] > :not(summary),
   .result-fold > summary::after, .result-explain > summary::after, .usage-notice { display: none !important; }
   #issues .issue .d { display: block !important; }
   details.result-fold > .card-body, details.result-explain > div { display: block !important; }
+}
+
+/* 简洁计算器布局：宽配置区、紧凑结果区，帮助按需展开。 */
+@media (min-width: 1181px) {
+  .layout { grid-template-columns: minmax(0, 1.35fr) minmax(360px, .85fr); gap: 40px; }
+  .col-config .card { grid-template-columns: minmax(0, 150px) minmax(0, 1fr) 28px; padding: 18px 0; }
+}
+.col-config .card.guide { display: block; padding: 0 0 20px; border-top: none; }
+.card.guide > h2 { justify-content: space-between; }
+.card.guide > h2 .hint { display: none; }
+.card.guide > .card-body { display: flex; flex-wrap: wrap; align-items: start; gap: 14px; padding-top: 14px; }
+.guide-actions { margin: 0; }
+.guide-help { flex: 1 1 150px; font-size: var(--fs-sm); color: var(--text-3); }
+.guide-help > summary { cursor: pointer; padding: 8px 0; }
+.guide-help[open] { flex-basis: 100%; }
+.guide-help .guide-steps { margin: 12px 0; }
+.col-config .card > h2 .hint { display: none; }
+.col-config .card > h2 .idx { display: none; }
+.col-config .card > h2::before { display: none; }
+.col-config .card > h2 .sec-ico { transition: transform 160ms var(--ease); }
+.col-config .card:hover > h2 .sec-ico { transform: translateX(2px); }
+.col-result .reco { padding: 24px; }
+.col-result .reco .big { display: block; margin: 14px 0 22px; }
+.col-result .hero { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 18px 0; }
+.col-result .hero > div { display: block; min-width: 0; padding: 0; border: 0; }
+.col-result .hero .k { font-size: var(--fs-xs); }
+.col-result .hero .v { margin-top: 8px; font-size: 20px; }
+.col-result .hero > div::after { display: none; }
+.col-result .psu-picks { grid-template-columns: 1fr; gap: 0; }
+.col-result .psu-pick { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+.col-result .psu-pick > * { grid-column: 1; }
+.col-result .psu-pick .w { grid-column: 2; grid-row: 1 / 4; align-self: center; }
+.col-result .psu-pick .nm { margin: 4px 0; }
+.pick-specs { grid-column: 1 / -1 !important; color: var(--text-3); font-size: var(--fs-xs); margin-top: 8px; }
+.pick-specs > summary { cursor: pointer; padding: 4px 0; }
+.result-fold > summary::after, .result-explain > summary::after { transition: transform 180ms var(--ease); }
+.result-fold[open] > summary::after, .result-explain[open] > summary::after { content: '＋'; transform: rotate(45deg); }
+.storage-row, .custom-row { animation: psu-ui-enter .22s var(--ease) both; }
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled):hover { transform: translateY(-1px); }
+  button:not(:disabled):active { transform: translateY(1px) scale(.98); }
+}
+@media (max-width: 700px) {
+  .modal-backdrop { padding: 16px; }
+  .modal-card { height: auto; max-height: calc(100dvh - 32px); border: 1px solid var(--line); }
+  .modal-foot { flex-wrap: wrap; }
+  .modal-foot .chk { font-size: var(--fs-sm); }
+  .col-result .reco { padding: 18px; }
+  .col-result .hero { gap: 8px; }
+}
+@media screen and (min-width: 1181px) {
+  .wrap, .top-inner { max-width: 1360px; }
+  .layout { grid-template-columns: minmax(0, 1.65fr) minmax(340px, 1fr); gap: 56px; }
+  .col-config .card { grid-template-columns: 132px minmax(0, 1fr) 28px; padding-top: 24px; padding-bottom: 24px; }
+}
+@media screen {
+  .col-result .reco { border: 1px solid var(--line); background: var(--surface); padding: 30px; }
+  .col-result .reco .big::after { display: none; }
+  .modal-card { width: min(580px, 100%); }
+  .modal-head, .modal-foot { padding: 20px 24px; }
+  .modal-body { padding: 10px 24px 20px; }
+  .modal-head .wordmark { display: none; }
+  .col-config .card { transition: border-color 200ms var(--ease), background-color 200ms var(--ease); }
+  select, input { transition: border-color 180ms var(--ease), background-color 180ms var(--ease); }
+  .page-intro { animation: psu-ui-enter .22s var(--ease) both; }
+}
+@media (max-width: 640px) {
+  .page-intro { padding: 14px 0 28px; }
+  .modal-head, .modal-foot { padding: 16px 20px; }
+  .modal-body { padding: 8px 20px 16px; }
+}
+@media print { .page-intro { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  button:hover, .col-config .card:hover > h2 .sec-ico { transform: none !important; }
+}
+@media print {
+  .guide-help { display: none !important; }
+  .storage-row, .custom-row { animation: none !important; }
 }
 
 /* 尊重系统的「减少动态效果」设置 */
