@@ -408,7 +408,7 @@
           <div class="reco-label">推荐电源</div>
           <div class="big" id="recoBig">— W</div>
           <div class="sub" id="recoSub"></div>
-          <div class="meta" id="recoMeta"></div>
+          <p class="usage-notice">估算结果，仅供选型参考 · <button type="button" class="usage-open">使用须知</button></p>
         </div>
 
         <!-- 辅助数字：规划 / 预期 / 瞬时峰值 -->
@@ -416,26 +416,30 @@
           <div>
             <div class="k">规划功耗（峰值合计）</div>
             <div class="v accent" id="heroPower">0<small> W</small></div>
-            <div class="u" id="heroPowerNote">各部件功耗上限之和</div>
+
           </div>
           <div>
             <div class="k">场景预期功耗</div>
             <div class="v blue" id="heroExpected">0<small> W</small></div>
-            <div class="u" id="heroExpectedNote">按场景负载系数折算</div>
+
           </div>
           <div>
             <div class="k">瞬时峰值（估算）</div>
             <div class="v warn" id="heroTransient">0<small> W</small></div>
-            <div class="u" id="heroTransientNote">含显卡功率尖峰与硬盘启动</div>
+
           </div>
         </div>
+
+        <details class="result-explain"><summary>计算说明</summary><div class="explain-content"><div class="u" id="heroPowerNote">各部件功耗上限之和</div>
+<div class="u" id="heroExpectedNote">按场景负载系数折算</div>
+<div class="u" id="heroTransientNote">含显卡功率尖峰与硬盘启动</div></div></details>
 
         <!-- 三档推荐 -->
         <section class="card">
           <h2>电源推荐方案<span class="hint" id="psuPickHint"></span></h2>
           <div class="card-body">
             <div class="psu-picks" id="psuPicks"></div>
-            <div id="psuPickNote" style="margin-top:11px"></div>
+            <details class="result-explain"><summary>选型依据</summary><div class="meta" id="recoMeta"></div><div id="psuPickNote" style="margin-top:11px"></div></details>
           </div>
         </section>
 
@@ -446,14 +450,14 @@
         </section>
 
         <!-- 升级建议 -->
-        <section class="card">
-          <h2>升级空间</h2>
+        <details class="card result-fold">
+          <summary><h2>升级空间</h2></summary>
           <div class="card-body" id="upgradeBox"></div>
-        </section>
+        </details>
 
         <!-- 智能建议 -->
-        <section class="card">
-          <h2>配置平衡建议</h2>
+        <details class="card result-fold">
+          <summary><h2>配置平衡建议</h2></summary>
           <div class="card-body">
             <div class="field">
               <label>整机预算 <span class="unit">(元，选填)</span></label>
@@ -461,16 +465,16 @@
             </div>
             <div id="adviceBox" style="margin-top:11px"></div>
           </div>
-        </section>
+        </details>
 
         <!-- 功耗明细 -->
-        <section class="card">
-          <h2>功耗明细<span class="hint">含来源与置信度</span></h2>
+        <details class="card result-fold">
+          <summary><h2>功耗明细<span class="hint">含来源与置信度</span></h2></summary>
           <div class="card-body tight">
             <!-- 窄屏必须能横向滚动，否则右侧的瓦数/来源列会被裁掉且无法触达 -->
             <div class="table-scroll"><table class="detail" id="detailTable"></table></div>
           </div>
-        </section>
+        </details>
 
         <!-- 导出 -->
         <section class="card">
@@ -549,7 +553,7 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- ========================= 数据声明弹窗（打开页面时自动出现）==========
+<!-- ========================= 使用须知弹窗（用户主动打开）==========
      原「数据来源」卡片与显卡卡里的两段声明都搬到了这里，
      所以 id="sources" 与 id="aibCatalogNote" 依然存在 —— app.js 不需要改。
      顶栏的「数据声明」按钮可以随时重新打开。
@@ -568,44 +572,29 @@
     </div>
 
     <div class="modal-body" id="dmBody">
-      <section>
-        <h3>功耗为估算值</h3>
-        <p>
-          数据来自官方规格、评测或估算，均标注来源。实际功耗随负载与设置变化，<b>选型仍需参考厂商建议</b>。标为 <span class="conf leak">leak</span> 的信息未经发布确认。
-        </p>
-      </section>
-
-      <section>
-        <h3>显卡板型与主板</h3>
-        <p>
-          显卡板型影响功耗与供电接口；系统主板另行校验 CPU 插槽兼容性。
-        </p>
-      </section>
-
-      <section>
-        <h3>AIC 板型数据的可靠性</h3>
+      <ul class="usage-points">
+        <li>功耗为估算，选型请结合厂商建议。</li>
+        <li>部分板型与旧卡数据为推算，已标注来源。</li>
+        <li>购买前请确认供电接口、尺寸与保修。</li>
+      </ul>
+      <details class="result-explain">
+        <summary>数据来源与标记说明</summary>
+        <p>official：官方规格；review：评测；estimate：估算；leak：未经发布确认。</p>
         <div class="note warn" id="aibCatalogNote"></div>
-      </section>
-
-      <section>
-        <h3>旧卡与二手硬件</h3>
-        <p>
-          部分已停产旧卡的数据为估算。建议额外留一档功率余量，并确认二手硬件的成色与保修。
-        </p>
-      </section>
-
-      <section>
-        <h3>数据来源</h3>
         <ul class="src-list" id="sources"></ul>
-      </section>
+      </details>
+      <details class="result-explain">
+        <summary>旧卡与二手硬件说明</summary>
+        <p>部分已停产旧卡数据为估算。建议额外留一档功率余量，并确认成色与保修。</p>
+      </details>
     </div>
 
     <div class="modal-foot">
-      <label class="chk" for="dmNever">
+      <label class="chk" for="dmNever" hidden>
         <input type="checkbox" id="dmNever">
         <span>不再提示</span>
       </label>
-      <button type="button" class="primary" id="dmOk">开始使用</button>
+      <button type="button" class="primary" id="dmOk">知道了</button>
     </div>
   </div>
 </div>

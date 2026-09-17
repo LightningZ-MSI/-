@@ -13,7 +13,7 @@
  *    3. 把配置列里冗长的 .note 说明收成两行 + ⓘ 展开（结果列的说明不动，
  *       因为那是"答案的一部分"，折叠它反而有害）
  *    4. 移动端底部常驻条，同步显示推荐瓦数
- *    5. 数据声明弹窗（打开页面时自动出现，顶栏按钮可重开）
+ *    5. 使用须知弹窗（仅由顶栏或推荐区入口主动打开）
  *
  *  在 head 加载以决定首帧；DOMContentLoaded 初始化时 app.js 已渲染 DOM。
  * ==========================================================================*/
@@ -341,12 +341,7 @@
      声明都搬进了这里，所以 id="sources" / id="aibCatalogNote" 都还在原位
      （只是换了父节点），app.js 一行都不用改。
 
-     抑制规则（两者之一成立就不弹）：
-       · URL 带 ?nodisclaimer=1 —— 给截图 / OG 图 / 回归测试用，
-         否则弹窗会盖住整页，基线比对和预览图全废
-       · localStorage 里记住了同一个数据版本 —— 用户勾了「不再提示」。
-         按「数据版本」而不是布尔值记，是为了数据库升版后能再提示一次。 */
-  var DM_KEY = 'psu-calc-2026-v1-disclaimer';
+     用户主动打开，不在首次访问或动画结束后弹出。 */
 
   function setupDisclaimer() {
     var m = $('disclaimerModal');
@@ -356,18 +351,7 @@
     var body = $('dmBody');
     var okBtn = $('dmOk');
     var xBtn = $('dmClose');
-    var never = $('dmNever');
     var lastFocus = null;
-
-    function dbVersion() {
-      var d = window.HWDB;
-      return (d && d.meta && d.meta.version) || '1';
-    }
-    function suppressed() {
-      if (/[?&]nodisclaimer=1(&|$)/.test(location.search)) return true;
-      if (location.hash === '#nodisclaimer') return true;
-      try { return localStorage.getItem(DM_KEY) === dbVersion(); } catch (e) { return false; }
-    }
 
     function isOpen() { return !m.hidden; }
 
@@ -382,10 +366,6 @@
 
     function close() {
       if (!isOpen()) return;
-      // 勾了「不再提示」才记；没勾就下次打开还提示 —— 声明不能被动消失
-      if (never && never.checked) {
-        try { localStorage.setItem(DM_KEY, dbVersion()); } catch (e) {}
-      }
       m.hidden = true;
       document.body.classList.remove('modal-open');
       if (lastFocus && lastFocus.focus) {
@@ -395,6 +375,7 @@
     }
 
     openBtn.addEventListener('click', open);
+    document.querySelectorAll('.usage-open').forEach(function (button) { button.addEventListener('click', open); });
     if (okBtn) okBtn.addEventListener('click', close);
     if (xBtn) xBtn.addEventListener('click', close);
 
@@ -407,7 +388,7 @@
     m.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' || e.key === 'Esc') { close(); return; }
       if (e.key !== 'Tab') return;
-      var f = m.querySelectorAll('button, input, [href], select, textarea, [tabindex]:not([tabindex="-1"])');
+      var f = m.querySelectorAll('button, input, summary, [href], select, textarea, [tabindex]:not([tabindex="-1"])');
       var list = Array.prototype.filter.call(f, function (el) {
         return !el.disabled && el.offsetParent !== null;
       });
@@ -416,14 +397,6 @@
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
-
-    if (!suppressed()) {
-      if (document.documentElement.classList.contains('psu-boot-active')) {
-        document.addEventListener('psu:boot-end', function () {
-          if (!suppressed()) open();
-        }, { once: true });
-      } else open();
-    }
 
     // 供自动化测试 / 其他脚本调用
     window.__PSU_DISCLAIMER__ = { open: open, close: close, isOpen: isOpen };
@@ -581,4 +554,53 @@
   });
   reduced.addEventListener('change', clear);
   window.addEventListener('beforeprint', clear);
+})();
+
+/* 结果分层只整理呈现，不改计算；保留用户主动展开的风险详情。 */
+(function () {
+  function setup() {
+    var root = document.querySelector('.col-result');
+    if (!root) return;
+    var states = new Map();
+    var observer = new MutationObserver(refresh);
+    function refresh() {
+      observer.disconnect();
+      var explanation = root.querySelector('.explain-content');
+      var previous = explanation.querySelector('.recommendation-math');
+      var formula = root.querySelector('#recoSub > span');
+      if (formula) {
+        if (previous) previous.remove();
+        formula.classList.add('recommendation-math'); explanation.appendChild(formula);
+      } else if (!root.querySelector('#recoSub b') && previous) previous.remove();
+      root.querySelectorAll('.result-fold').forEach(function (fold) {
+        var summary = fold.querySelector('summary'), status = summary.querySelector('.fold-status');
+        if (!status) { status = document.createElement('span'); status.className = 'fold-status'; summary.appendChild(status); }
+        var upgrade = fold.querySelector('#upgradeBox');
+        var advice = fold.querySelector('#adviceBox');
+        if (upgrade) {
+          var values = upgrade.querySelectorAll('dd');
+          status.textContent = values.length ? '余量 ' + values[0].textContent : '待选配置';
+        } else if (advice) {
+          var count = advice.querySelectorAll('.issue').length;
+          status.textContent = count ? count + ' 条建议' : '待选配置';
+        }
+      });
+      root.querySelectorAll('#issues .issue:not(.error):not(.ok)').forEach(function (issue) {
+        if (issue.querySelector('details')) return;
+        var content = issue.querySelector(':scope > div'), title = content && content.querySelector('b');
+        if (!title || title.textContent === '尚未选择硬件') return;
+        var key = issue.className + ':' + title.textContent;
+        var details = document.createElement('details'), summary = document.createElement('summary');
+        summary.appendChild(title); details.appendChild(summary);
+        while (content.firstChild) details.appendChild(content.firstChild);
+        details.open = states.get(key) === true;
+        details.addEventListener('toggle', function () { states.set(key, details.open); });
+        content.appendChild(details);
+      });
+      observer.observe(root, { childList: true, subtree: true, characterData: true });
+    }
+    refresh();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup, { once: true });
+  else setup();
 })();

@@ -1050,6 +1050,36 @@ html:not(.psu-boot-active) details[open] > :not(summary),
   }
 }
 
+/* 结论优先：详情由用户展开，打印保留完整报告。 */
+.result-fold > summary { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 14px 0; }
+.result-fold > summary h2 .hint { margin-left: 10px; font-size: var(--fs-xs); font-weight: 400; color: var(--text-3); }
+.result-fold > summary h2 { margin: 0; font-size: var(--fs-h); }
+.result-fold > summary::after, .result-explain > summary::after { content: '＋'; margin-left: auto; color: var(--text-3); }
+.result-fold[open] > summary::after, .result-explain[open] > summary::after { content: '−'; }
+.result-fold > summary, .result-explain > summary { list-style: none; }
+.result-fold > summary::-webkit-details-marker, .result-explain > summary::-webkit-details-marker { display: none; }
+.result-explain { margin: 10px 0; color: var(--text-3); font-size: var(--fs-sm); }
+.result-explain > summary { display: flex; gap: 10px; cursor: pointer; padding: 8px 0; }
+.explain-content { display: grid; gap: 8px; padding: 8px 0; }
+.result-explain .meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.fold-status { font-size: var(--fs-xs); color: var(--text-3); font-weight: 400; }
+.usage-notice { margin: 14px 0 0; color: var(--text-3); font-size: var(--fs-xs); }
+.usage-open { padding: 0; border: 0; background: none; font-size: inherit; text-decoration: underline; min-height: 0; }
+.usage-points { padding-left: 20px; margin: 0 0 18px; line-height: 1.8; }
+.modal-foot .chk[hidden] { display: none; }
+#issues .issue.ok .d, #issues .issue.info:has(b:first-child) > div > .d { display: none; }
+#issues .issue details > summary { cursor: pointer; }
+#issues .issue details > summary b { display: inline; }
+#upgradeBox > .note:last-child:not(.accent) { display: none; }
+#upgradeBox > .empty, #adviceBox > .empty { display: none; }
+.hero > div { padding-top: 12px; padding-bottom: 12px; }
+@media print {
+  .result-fold > summary { display: block !important; }
+  .result-fold > summary::after, .result-explain > summary::after, .usage-notice { display: none !important; }
+  #issues .issue .d { display: block !important; }
+  details.result-fold > .card-body, details.result-explain > div { display: block !important; }
+}
+
 /* 尊重系统的「减少动态效果」设置 */
 @media (prefers-reduced-motion: reduce) {
   .psu-boot { display: none !important; }
