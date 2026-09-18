@@ -6,4 +6,4 @@ Allow: /
 Disallow: /tools/
 Disallow: /docs/
 
-Sitemap: https://lightningz-msi.github.io/-/sitemap.xml
+Sitemap: https://lightningz-x.github.io/-/sitemap.xml
