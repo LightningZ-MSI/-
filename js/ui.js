@@ -466,7 +466,7 @@
   }
 })();
 
-/* 一次性启动：5.0s 启动 + 1.2s 内容填充。仅呈现，不修改配置或计算值。 */
+/* 一次性启动：已确认的 Remotion V2 成片；结束、跳过或失败均恢复页面。 */
 (function () {
   'use strict';
   var root = document.documentElement;
@@ -478,7 +478,7 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', settleInitialLayout, { once: true });
   else settleInitialLayout();
-  var key = 'psu-boot-seen-v1';
+  var key = 'psu-boot-seen-v2';
   var motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   var seen = false;
   try { seen = sessionStorage.getItem(key) === '1'; } catch (e) {}
@@ -486,7 +486,7 @@
       motion.matches || window.matchMedia('print').matches || seen) return;
 
   root.classList.add('psu-boot-active', 'psu-boot-pending');
-  var done = false, timers = [], inertNodes = [], fills = [];
+  var done = false, timers = [], inertNodes = [], fills = [], video = null;
   var inputEvents = ['pointerdown', 'click', 'keydown', 'touchstart'];
 
   function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
@@ -499,6 +499,7 @@
       event.stopImmediatePropagation();
     }
     timers.forEach(clearTimeout);
+    if (video) { video.pause(); video.removeAttribute("src"); video.load(); }
     root.classList.remove('psu-boot-active', 'psu-boot-pending', 'psu-boot-running',
       'psu-boot-reveal', 'psu-boot-fill');
     inertNodes.forEach(function (el) { el.inert = false; });
@@ -535,26 +536,15 @@
         inertNodes.push(el);
       }
     });
-    function group(selector, first, last) {
-      var nodes = document.querySelectorAll(selector);
-      Array.prototype.forEach.call(nodes, function (el, i) {
-        el.classList.add('psu-boot-item');
-        el.style.setProperty('--psu-boot-delay',
-          (first + (last - first) * i / Math.max(1, nodes.length - 1)) + 'ms');
-        fills.push(el);
-      });
-    }
-    // 框架先在 4.4–5.0s 淡入；只对内容施加延迟，不覆盖折叠容器的透明度。
-    group('.col-config .guide > .card-body, .col-config .card-body-in, .col-config .card-summary', 0, 560);
-    group('.reco > :not(.reco-label), .hero > div', 420, 680);
-    group('.col-result .card-body, .wrap > details', 600, 840);
+    video = document.querySelector('.psu-boot-video');
+    if (!video) { finish(); return; }
+    video.muted = true;
+    video.addEventListener('ended', finish, { once: true });
+    video.addEventListener('error', finish, { once: true });
+    video.src = video.dataset.src;
     root.classList.add('psu-boot-running');
-    later(function () {
-      root.classList.remove('psu-boot-pending');
-      root.classList.add('psu-boot-reveal');
-    }, 4400);
-    later(function () { root.classList.add('psu-boot-fill'); }, 5000);
-    later(finish, 6200);
+    var playback = video.play();
+    if (playback && playback.catch) playback.catch(function () { finish(); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
   else start();
