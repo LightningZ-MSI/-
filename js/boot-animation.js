@@ -53,7 +53,16 @@
         if (f>=121) { stop(); onEnd(); return; }
         canvas.dataset.frame=f.toFixed(2);
         ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-        ctx.save(); ctx.translate(canvas.width/2-640,canvas.height/2-360);
+        ctx.save();
+        // Draw the approved 1280x720 composition as one unit. Portrait phones
+        // use a 9:16 canvas and fit that unit proportionally, with no stretching.
+        if (portrait.matches) {
+          var fit = canvas.width / 1280;
+          ctx.translate(0, (canvas.height - 720 * fit) / 2);
+          ctx.scale(fit, fit);
+        } else {
+          ctx.translate(canvas.width / 2 - 640, canvas.height / 2 - 360);
+        }
         ctx.save(); ctx.globalAlpha=k(f,[16,17,18,19,20,21,22,23,24,36],[0,.013,.025,.04,.06,.33,.07,.055,0,0]);
         ctx.fillStyle='#c50020'; ctx.fillRect(640-canvas.width/2,360-canvas.height/2,canvas.width,canvas.height); ctx.restore();
         haze(655,335,710,510,k(f,[16,17,19,20,21,22,23,24,28,34,40],[0,.05,.19,.24,.68,.25,.15,.085,.046,.012,0]));
