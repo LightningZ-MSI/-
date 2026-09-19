@@ -1263,5 +1263,14 @@ html:not(.psu-boot-active) details[open] > :not(summary),
 }
 .print-only { display: none; }
 
-/* Approved Remotion V2: retain the complete frame on every screen. */
-.psu-boot-video { display: block; width: 100%; height: 100%; object-fit: contain; background: #000; }
+/* Keep the 1280x720 composition proportional; portrait uses its central square.
+   Logo and wordmark remain inside that square, with only side background cropped. */
+.psu-boot { overflow: hidden; height: 100vh; height: 100dvh; }
+.psu-boot-video {
+  display: block; flex: none; max-width: none;
+  width: min(100vw, 177.777778vh); width: min(100vw, 177.777778dvh);
+  height: auto; aspect-ratio: 16 / 9; object-fit: contain; background: #000;
+}
+@media (orientation: portrait) {
+  .psu-boot-video { width: 177.777778vw; }
+}
