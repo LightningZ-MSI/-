@@ -1263,14 +1263,16 @@ html:not(.psu-boot-active) details[open] > :not(summary),
 }
 .print-only { display: none; }
 
-/* Keep the 1280x720 composition proportional; portrait uses its central square.
-   Logo and wordmark remain inside that square, with only side background cropped. */
+/* Native animation: complete 16:9 desktop or 9:16 portrait stage, never stretched. */
 .psu-boot { overflow: hidden; height: 100vh; height: 100dvh; }
-.psu-boot-video {
+.psu-boot-canvas {
   display: block; flex: none; max-width: none;
   width: min(100vw, 177.777778vh); width: min(100vw, 177.777778dvh);
-  height: auto; aspect-ratio: 16 / 9; object-fit: contain; background: #000;
+  height: auto; aspect-ratio: 16 / 9; background: #000;
 }
 @media (orientation: portrait) {
-  .psu-boot-video { width: 177.777778vw; }
+  .psu-boot-canvas {
+    width: min(100vw, 56.25vh); width: min(100vw, 56.25dvh);
+    aspect-ratio: 9 / 16;
+  }
 }

@@ -66,11 +66,12 @@
 
 <link rel="stylesheet" href="assets/style.css">
 <!-- 首帧前决定是否播放；ui.js 的 DOM 初始化仍在 DOMContentLoaded、app.js 之后。 -->
+<script src="js/boot-animation.js"></script>
 <script src="js/ui.js"></script>
 </head>
 <body>
 <div class="psu-boot" aria-hidden="true">
-  <video class="psu-boot-video" muted playsinline preload="none" data-src="assets/lightningz-boot-v2.mp4" tabindex="-1"></video>
+  <canvas class="psu-boot-canvas" width="1280" height="720" data-mark="assets/boot-mark.png" data-wordmark="assets/boot-wordmark.png"></canvas>
 </div>
 
 <!-- 页面内容由 JavaScript 渲染，这里为禁用 JS 的访问者与部分爬虫提供兜底说明 -->
